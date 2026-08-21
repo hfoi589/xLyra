@@ -13,7 +13,7 @@ services:
       - xlyra
 
   xlyra:
-    image: yachiiiiyo/xlyra:latest
+    image: hfoi589/xlyra:latest
     container_name: xlyra
     restart: unless-stopped
     depends_on:

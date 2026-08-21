@@ -32,6 +32,66 @@
       "description": "No forwarded request records to display."
     }
   },
+  "tabs": {
+    "records": "Request records",
+    "charts": "Statistics"
+  },
+  "charts": {
+    "title": "Request statistics",
+    "description": "Analyze request cost and token flow across the selected range, model, site and downstream API key.",
+    "loading": "Loading analytics",
+    "empty": "No drawable data for the current filters.",
+    "loadFailed": "Failed to load analytics",
+    "refreshFailed": "Analytics refresh failed",
+    "totalRequests": "Requests",
+    "totalTokens": "Total tokens",
+    "currency": "Currency",
+    "filters": {
+      "models": "Models",
+      "sites": "Sites",
+      "apiKeys": "Downstream keys",
+      "currency": "Currency",
+      "searchModels": "Search models",
+      "searchSites": "Search sites",
+      "searchApiKeys": "Search downstream keys",
+      "noModels": "No models available",
+      "noSites": "No sites available",
+      "noApiKeys": "No downstream keys available",
+      "selected": "selected",
+      "applyHint": "Click Apply after changing filters; all three views update in parallel.",
+      "apply": "Apply filters",
+      "reset": "Reset"
+    },
+    "bar": {
+      "title": "Grouped stacked bars",
+      "description": "Summarize total cost by model across the selected range, stacking downstream API keys within each model."
+    },
+    "scatter": {
+      "title": "15-minute cost scatter",
+      "description": "Follow the selected time range on X with hourly spacing; plot total cost aggregated into 15-minute buckets on Y.",
+      "tooMany": "More than 5,000 drawable 15-minute buckets were found. Narrow the date, model or key filters."
+    },
+    "sankey": {
+      "title": "Token Sankey",
+      "description": "Show token flow from site to model to downstream API key; date is a filter only.",
+      "legend": {
+        "site": "Site",
+        "model": "Model",
+        "api_key": "Downstream key"
+      }
+    },
+    "tooltip": {
+      "bucket": "Time bucket",
+      "requestCount": "Requests",
+      "model": "Model",
+      "site": "Site",
+      "apiKey": "Downstream key",
+      "status": "Status",
+      "tokens": "Tokens",
+      "cost": "Cost",
+      "totalCost": "Total cost"
+    }
+  },
   "filters": {
     "dateFrom": "Start date",
     "timeFrom": "Start time",

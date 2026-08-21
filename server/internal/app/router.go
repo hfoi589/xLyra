@@ -185,6 +185,7 @@ func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Stor
 				protected.Get("/requests", adminHandler.ListRequestLogs)
 				protected.Get("/requests/summary", adminHandler.RequestLogSummary)
 				protected.Get("/requests/channel-split", adminHandler.RequestChannelSplit)
+				protected.Get("/requests/analytics", adminHandler.RequestAnalytics)
 				protected.Get("/requests/{requestLogID}", adminHandler.GetRequestLog)
 				protected.Post("/site-types/detect", adminHandler.DetectSiteType)
 				protected.Get("/sites", adminHandler.ListSites)

@@ -30,6 +30,66 @@
       "description": "表示できる転送リクエスト記録はありません。"
     }
   },
+  "tabs": {
+    "records": "リクエスト記録",
+    "charts": "統計チャート"
+  },
+  "charts": {
+    "title": "リクエスト統計",
+    "description": "選択した期間、モデル、サイト、下流 API キーごとにコストとトークンの流れを分析します。",
+    "loading": "統計を読み込み中",
+    "empty": "現在のフィルターでは描画できるデータがありません。",
+    "loadFailed": "統計の読み込みに失敗しました",
+    "refreshFailed": "統計の更新に失敗しました",
+    "totalRequests": "リクエスト数",
+    "totalTokens": "総トークン",
+    "currency": "通貨",
+    "filters": {
+      "models": "モデル",
+      "sites": "サイト",
+      "apiKeys": "下流キー",
+      "currency": "通貨",
+      "searchModels": "モデルを検索",
+      "searchSites": "サイトを検索",
+      "searchApiKeys": "下流キーを検索",
+      "noModels": "利用可能なモデルがありません",
+      "noSites": "利用可能なサイトがありません",
+      "noApiKeys": "利用可能な下流キーがありません",
+      "selected": "選択済み",
+      "applyHint": "フィルター変更後に適用を押すと、3 つのビューが同時に更新されます。",
+      "apply": "フィルターを適用",
+      "reset": "リセット"
+    },
+    "bar": {
+      "title": "グループ積み上げ棒グラフ",
+      "description": "選択した期間のモデル別合計コストを集計し、各モデル内で下流キー別に積み上げます。"
+    },
+    "scatter": {
+      "title": "15 分コスト散布図",
+      "description": "X 軸は選択した時間範囲に追従し、1 時間間隔で表示します。Y 軸は 15 分バケットの合計コストです。",
+      "tooMany": "描画可能な 15 分バケットが 5,000 件を超えています。日付、モデル、キーの範囲を絞ってください。"
+    },
+    "sankey": {
+      "title": "トークンのサンキー図",
+      "description": "サイト → モデル → 下流 API キーのトークンの流れを表示します。日付はフィルターのみです。",
+      "legend": {
+        "site": "サイト",
+        "model": "モデル",
+        "api_key": "下流キー"
+      }
+    },
+    "tooltip": {
+      "bucket": "時間バケット",
+      "requestCount": "リクエスト数",
+      "model": "モデル",
+      "site": "サイト",
+      "apiKey": "下流キー",
+      "status": "ステータス",
+      "tokens": "トークン",
+      "cost": "コスト",
+      "totalCost": "合計コスト"
+    }
+  },
   "filters": {
     "dateFrom": "開始日",
     "timeFrom": "開始時刻",

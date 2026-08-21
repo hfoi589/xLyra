@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { RequestsNavigationTabs } from '@/features/requests/components/requests-navigation-tabs'
 import { RequestsWorkspace } from '@/features/requests/components/requests-workspace'
 
 export function RequestsPage() {
@@ -11,5 +12,10 @@ export function RequestsPage() {
     navigate({ pathname: location.pathname, hash: location.hash }, { replace: true })
   }, [location.hash, location.pathname, location.search, navigate])
 
-  return <RequestsWorkspace initialSearch={location.search} />
+  return (
+    <div className="space-y-5">
+      <RequestsNavigationTabs active="records" />
+      <RequestsWorkspace initialSearch={location.search} />
+    </div>
+  )
 }
