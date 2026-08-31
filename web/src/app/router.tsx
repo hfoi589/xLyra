@@ -33,6 +33,7 @@ const ProtectedLayout = lazyNamed(() => import('@/app/protected-layout'), 'Prote
 const RateLimitSettingsPage = lazyNamed(() => import('@/routes/settings/global/rate-limit-settings-page'), 'RateLimitSettingsPage')
 const RegisterPage = lazyNamed(() => import('@/routes/register'), 'RegisterPage')
 const RequestsPage = lazyNamed(() => import('@/routes/requests'), 'RequestsPage')
+const RequestsChartsPage = lazyNamed(() => import('@/routes/requests/charts'), 'RequestsChartsPage')
 const RoutesPage = lazyNamed(() => import('@/routes/routing'), 'RoutesPage')
 const SiteGroupsSettingsPage = lazyNamed(() => import('@/routes/settings/global/site-groups-settings-page'), 'SiteGroupsSettingsPage')
 const SitesPage = lazyNamed(() => import('@/routes/sites'), 'SitesPage')
@@ -67,6 +68,7 @@ export const appRouter = createBrowserRouter([
       { path: 'api-keys', element: lazyElement(<APIKeysPage />) },
       { path: 'routes', element: lazyElement(<RoutesPage />) },
       { path: 'requests', element: lazyElement(<RequestsPage />) },
+      { path: 'requests/charts', element: lazyElement(<RequestsChartsPage />) },
       { path: 'audit', element: lazyElement(<AuditLogsPage />) },
       {
         path: 'settings',

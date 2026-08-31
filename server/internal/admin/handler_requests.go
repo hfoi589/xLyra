@@ -155,6 +155,113 @@ func (h Handler) RequestLogSummary(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h Handler) RequestAnalytics(w http.ResponseWriter, r *http.Request) {
+	if h.usage == nil {
+		h.writeError(w, r, http.StatusServiceUnavailable, "request_log_service_unavailable", "request log service is not available")
+		return
+	}
+
+	query, ok := h.requestAnalyticsQuery(w, r)
+	if !ok {
+		return
+	}
+	result, err := h.usage.Analytics(r.Context(), query, time.Now())
+	if err != nil {
+		switch {
+		case errors.Is(err, usage.ErrInvalidAnalyticsView):
+			h.writeError(w, r, http.StatusBadRequest, "invalid_analytics_view", "view must be bar, scatter or sankey")
+		case errors.Is(err, usage.ErrInvalidAnalyticsRange):
+			h.writeError(w, r, http.StatusBadRequest, "invalid_analytics_range", "created_from must be before created_to")
+		case errors.Is(err, usage.ErrAnalyticsRangeTooLarge):
+			h.writeError(w, r, http.StatusBadRequest, "analytics_range_too_large", "analytics range must not exceed 365 days")
+		case errors.Is(err, usage.ErrAnalyticsCurrencyMissing):
+			h.writeError(w, r, http.StatusBadRequest, "invalid_currency", "currency is not available for the selected filters")
+		default:
+			h.writeError(w, r, http.StatusInternalServerError, "request_analytics_failed", "failed to load request analytics")
+		}
+		return
+	}
+	h.writePayload(w, http.StatusOK, result)
+}
+
+func (h Handler) requestAnalyticsQuery(w http.ResponseWriter, r *http.Request) (usage.AnalyticsQuery, bool) {
+	view := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("view")))
+	if view == "" {
+		view = usage.AnalyticsViewBar
+	}
+	if view != usage.AnalyticsViewBar && view != usage.AnalyticsViewScatter && view != usage.AnalyticsViewSankey {
+		h.writeError(w, r, http.StatusBadRequest, "invalid_analytics_view", "view must be bar, scatter or sankey")
+		return usage.AnalyticsQuery{}, false
+	}
+
+	var success *bool
+	allStatuses := false
+	if raw := strings.TrimSpace(r.URL.Query().Get("success")); raw != "" {
+		if strings.EqualFold(raw, "all") {
+			allStatuses = true
+		} else {
+			parsed, err := strconv.ParseBool(raw)
+			if err != nil {
+				h.writeError(w, r, http.StatusBadRequest, "invalid_success", "success must be true, false or all")
+				return usage.AnalyticsQuery{}, false
+			}
+			success = &parsed
+		}
+	}
+	siteIDs, ok := parseSiteIDs(w, r, r.URL.Query()["site_id"])
+	if !ok {
+		return usage.AnalyticsQuery{}, false
+	}
+	apiKeyIDs, ok := parseUUIDList(w, r, r.URL.Query()["api_key_id"], "invalid_api_key_id", "api_key_id")
+	if !ok {
+		return usage.AnalyticsQuery{}, false
+	}
+	createdFrom, ok := optionalTimeQuery(w, r, "created_from")
+	if !ok {
+		return usage.AnalyticsQuery{}, false
+	}
+	createdTo, ok := optionalTimeQuery(w, r, "created_to")
+	if !ok {
+		return usage.AnalyticsQuery{}, false
+	}
+	currency := strings.TrimSpace(r.URL.Query().Get("currency"))
+	if currency != "" && !validAnalyticsCurrency(currency) {
+		h.writeError(w, r, http.StatusBadRequest, "invalid_currency", "currency must contain 1-16 letters, numbers, underscores or hyphens")
+		return usage.AnalyticsQuery{}, false
+	}
+	models := make([]string, 0, len(r.URL.Query()["model_key"]))
+	for _, model := range r.URL.Query()["model_key"] {
+		if model = strings.TrimSpace(model); model != "" {
+			models = append(models, model)
+		}
+	}
+	return usage.AnalyticsQuery{
+		View:        view,
+		CreatedFrom: createdFrom,
+		CreatedTo:   createdTo,
+		ModelKeys:   models,
+		SiteIDs:     siteIDs,
+		APIKeyIDs:   apiKeyIDs,
+		Success:     success,
+		AllStatuses: allStatuses,
+		Currency:    currency,
+	}, true
+}
+
+func validAnalyticsCurrency(value string) bool {
+	value = strings.TrimSpace(value)
+	if len(value) == 0 || len(value) > 16 {
+		return false
+	}
+	for _, char := range value {
+		if (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || (char >= '0' && char <= '9') || char == '_' || char == '-' {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
 func (h Handler) RequestChannelSplit(w http.ResponseWriter, r *http.Request) {
 	if h.usage == nil {
 		h.writeError(w, r, http.StatusServiceUnavailable, "request_log_service_unavailable", "request log service is not available")
