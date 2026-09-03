@@ -1,0 +1,45 @@
+{
+  "config": {
+    "title": "OAuth account cost configuration",
+    "description": "Enter the per-plan single quota, reset count, and account fee used to allocate downstream-key costs. Amounts are in USD.",
+    "singleQuota": "Single quota (USD)",
+    "resetCount": "Reset count",
+    "accountFee": "Account fee (USD)",
+    "save": "Save configuration",
+    "restore": "Restore saved",
+    "saved": "OAuth cost configuration saved",
+    "saveFailed": "Failed to save OAuth cost configuration"
+  },
+  "plans": {
+    "plus": "Plus",
+    "pro_lite": "Pro Lite",
+    "pro": "Pro"
+  },
+  "chart": {
+    "title": "Downstream-key allocated cost",
+    "description": "Shows OAuth account cost by grouped downstream-key name; model and downstream-key filters are ignored for this chart.",
+    "loading": "Loading allocation data",
+    "allocated": "Allocated cost",
+    "ofQuota": "of quota used",
+    "total": "Pie total",
+    "accountFee": "Account fee",
+    "totalUsage": "Total usage",
+    "totalQuota": "Total quota",
+    "overQuota": "Usage exceeds the configured quota; allocation remains formula-based."
+  },
+  "states": {
+    "singleSite": "Select exactly one site to view allocated cost.",
+    "notOAuth": "This site is not an OAuth account, so plan cost cannot be calculated.",
+    "unsupportedPlan": "This OAuth account is not Plus, Pro Lite, or Pro.",
+    "quotaNotConfigured": "Configure the single quota and reset count for this plan first.",
+    "feeNotConfigured": "Configure the account fee for this plan first.",
+    "unsupported": "Cost allocation is not available for this site.",
+    "loadFailed": "Failed to load allocation data",
+    "empty": "There is no USD usage to allocate in the selected range."
+  },
+  "tooltip": {
+    "usageCost": "Raw usage",
+    "usageShare": "Share of quota",
+    "allocatedCost": "Allocated cost"
+  }
+}

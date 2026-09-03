@@ -1,0 +1,45 @@
+{
+  "config": {
+    "title": "OAuth アカウント費用設定",
+    "description": "下流キーの費用配分に使う、プラン別の単回上限・リセット回数・アカウント費用を入力します。金額は USD です。",
+    "singleQuota": "単回上限（USD）",
+    "resetCount": "リセット回数",
+    "accountFee": "アカウント費用（USD）",
+    "save": "設定を保存",
+    "restore": "保存値に戻す",
+    "saved": "OAuth 費用設定を保存しました",
+    "saveFailed": "OAuth 費用設定の保存に失敗しました"
+  },
+  "plans": {
+    "plus": "Plus",
+    "pro_lite": "Pro Lite",
+    "pro": "Pro"
+  },
+  "chart": {
+    "title": "下流キーの配賦費用",
+    "description": "括弧前の下流キー名ごとに OAuth アカウント費用を表示します。この図ではモデルと下流キーの絞り込みを無視します。",
+    "loading": "配賦データを読み込み中",
+    "allocated": "配賦費用",
+    "ofQuota": "上限使用率",
+    "total": "円グラフ合計",
+    "accountFee": "アカウント費用",
+    "totalUsage": "総使用量",
+    "totalQuota": "総上限",
+    "overQuota": "使用量が設定上限を超えています。配賦額は計算式どおりです。"
+  },
+  "states": {
+    "singleSite": "配賦費用を表示するにはサイトを1つだけ選択してください。",
+    "notOAuth": "このサイトは OAuth アカウントではないため、プラン費用を計算できません。",
+    "unsupportedPlan": "この OAuth アカウントのプランは対象外です。",
+    "quotaNotConfigured": "先にこのプランの単回上限とリセット回数を設定してください。",
+    "feeNotConfigured": "先にこのプランのアカウント費用を設定してください。",
+    "unsupported": "このサイトでは費用配賦を利用できません。",
+    "loadFailed": "配賦データの読み込みに失敗しました",
+    "empty": "選択期間に配賦可能な USD 使用量がありません。"
+  },
+  "tooltip": {
+    "usageCost": "元の使用量",
+    "usageShare": "上限に対する割合",
+    "allocatedCost": "配賦費用"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "tabs": {
+    "records": "请求记录",
+    "charts": "统计图表"
+  },
+  "charts": {
+    "title": "统计图表",
+    "description": "按筛选区间、模型、站点和下游密钥分析请求花费与 Tokens 流向。",
+    "loading": "统计数据加载中",
+    "empty": "当前筛选没有可绘制的数据。",
+    "loadFailed": "统计数据读取失败",
+    "refreshFailed": "刷新统计数据失败",
+    "totalRequests": "请求数",
+    "totalTokens": "总 Tokens",
+    "currency": "币种",
+    "filters": {
+      "models": "模型",
+      "sites": "站点",
+      "apiKeys": "下游密钥",
+      "currency": "币种",
+      "searchModels": "搜索模型",
+      "searchSites": "搜索站点",
+      "searchApiKeys": "搜索下游密钥",
+      "noModels": "没有可选模型",
+      "noSites": "没有可选站点",
+      "noApiKeys": "没有可选下游密钥",
+      "selected": "已选",
+      "applyHint": "修改筛选条件后点击应用，三个视图会并行更新。",
+      "apply": "应用筛选",
+      "reset": "重置筛选"
+    },
+    "bar": {
+      "title": "分组堆叠柱状图",
+      "description": "按筛选区间汇总不同模型的总花费，同一模型内按下游密钥堆叠并分色。"
+    },
+    "scatter": {
+      "title": "15 分钟花费散点图",
+      "description": "横轴跟随顶部筛选时间并按小时等距分段，纵轴为每 15 分钟时间桶汇总的总花费。",
+      "tooMany": "可绘制的 15 分钟时间桶超过 5000 个，请缩小日期、模型或下游密钥范围。"
+    },
+    "sankey": {
+      "title": "Tokens 桑基图",
+      "description": "展示站点 → 模型 → 下游密钥的 Tokens 流向，日期仅作为筛选条件。",
+      "legend": {
+        "site": "站点",
+        "model": "模型",
+        "api_key": "下游密钥"
+      }
+    },
+    "tooltip": {
+      "bucket": "时间桶",
+      "requestCount": "请求数",
+      "model": "模型",
+      "site": "站点",
+      "apiKey": "下游密钥",
+      "status": "状态",
+      "tokens": "Tokens",
+      "cost": "花费",
+      "totalCost": "总花费"
+    }
+  }
+}

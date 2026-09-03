@@ -18,6 +18,7 @@ import (
 	"xlyra/server/internal/auth"
 	"xlyra/server/internal/catalog"
 	"xlyra/server/internal/config"
+	oauthcostshare "xlyra/server/internal/custom/oauthcostshare"
 	"xlyra/server/internal/dashboard"
 	"xlyra/server/internal/downloads"
 	"xlyra/server/internal/gateway"
@@ -90,6 +91,7 @@ func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Stor
 		postRestore = playgroundService.RecoverAfterRestore
 	}
 	settingsHandler := settings.NewHandlerWithBackup(logger.With("thread", "settings"), confFile, db, masterKey, downloadService, playgroundRoot, preRestore, postRestore, appTimeZone)
+	oauthCostShareHandler := oauthcostshare.NewHandler(db, confFile, appTimeZone)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -138,6 +140,7 @@ func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Stor
 				protected.Use(requireAdmin(authService))
 				protected.Use(requireAdminCSRF(authService))
 				protected.Use(adminHandler.AuditAdminMutation)
+				oauthCostShareHandler.Mount(protected)
 				protected.Get("/auth/session", adminHandler.CurrentSession)
 				protected.Delete("/auth/session", adminHandler.DeleteSession)
 				protected.Route("/playground", func(playgroundRouter chi.Router) {
@@ -206,6 +209,7 @@ func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Stor
 				protected.Get("/requests", adminHandler.ListRequestLogs)
 				protected.Get("/requests/summary", adminHandler.RequestLogSummary)
 				protected.Get("/requests/channel-split", adminHandler.RequestChannelSplit)
+				protected.Get("/requests/analytics", adminHandler.RequestAnalytics)
 				protected.Get("/requests/{requestLogID}", adminHandler.GetRequestLog)
 				protected.Post("/site-types/detect", adminHandler.DetectSiteType)
 				protected.Get("/sites", adminHandler.ListSites)

@@ -19,6 +19,8 @@ const namespaces = [
   'portal',
   'playground',
   'traffic-flow',
+  'request-charts',
+  'oauth-cost-share',
 ] as const
 
 type Locale = 'zh' | 'en' | 'jp'
@@ -43,6 +45,8 @@ const resourceLoaders: Record<Locale, Record<Namespace, () => Promise<ResourceMo
     portal: () => import('./zh/portal.json'),
     playground: () => import('./zh/playground.json'),
     'traffic-flow': () => import('./zh/traffic-flow.json'),
+    'request-charts': () => import('./zh/request-charts.json'),
+    'oauth-cost-share': () => import('./zh/oauth-cost-share.json'),
   },
   en: {
     common: () => import('./en/common.json'),
@@ -61,6 +65,8 @@ const resourceLoaders: Record<Locale, Record<Namespace, () => Promise<ResourceMo
     portal: () => import('./en/portal.json'),
     playground: () => import('./en/playground.json'),
     'traffic-flow': () => import('./en/traffic-flow.json'),
+    'request-charts': () => import('./en/request-charts.json'),
+    'oauth-cost-share': () => import('./en/oauth-cost-share.json'),
   },
   jp: {
     common: () => import('./jp/common.json'),
@@ -79,6 +85,8 @@ const resourceLoaders: Record<Locale, Record<Namespace, () => Promise<ResourceMo
     portal: () => import('./jp/portal.json'),
     playground: () => import('./jp/playground.json'),
     'traffic-flow': () => import('./jp/traffic-flow.json'),
+    'request-charts': () => import('./jp/request-charts.json'),
+    'oauth-cost-share': () => import('./jp/oauth-cost-share.json'),
   },
 }
 

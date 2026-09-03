@@ -1,0 +1,45 @@
+{
+  "config": {
+    "title": "OAuth 账号费用配置",
+    "description": "按套餐录入单次额度、重置次数和账号费用，用于计算下游密钥分摊费用。金额单位为 USD。",
+    "singleQuota": "单次额度（USD）",
+    "resetCount": "重置次数",
+    "accountFee": "账号费用（USD）",
+    "save": "保存配置",
+    "restore": "恢复已保存",
+    "saved": "OAuth 费用配置已保存",
+    "saveFailed": "OAuth 费用配置保存失败"
+  },
+  "plans": {
+    "plus": "Plus",
+    "pro_lite": "Pro Lite",
+    "pro": "Pro"
+  },
+  "chart": {
+    "title": "下游密钥分摊费用",
+    "description": "按归集后的下游密钥名称展示 OAuth 账号费用分布；该图忽略模型和下游密钥筛选。",
+    "loading": "分摊数据加载中",
+    "allocated": "已分摊费用",
+    "ofQuota": "额度使用",
+    "total": "扇形合计",
+    "accountFee": "账号费用",
+    "totalUsage": "总用量",
+    "totalQuota": "总额度",
+    "overQuota": "用量已超过配置额度，分摊金额按实际公式计算。"
+  },
+  "states": {
+    "singleSite": "请选择一个站点后查看分摊费用。",
+    "notOAuth": "当前站点不是 OAuth 账号，无法计算套餐费用。",
+    "unsupportedPlan": "当前 OAuth 账号套餐不是 Plus、Pro Lite 或 Pro。",
+    "quotaNotConfigured": "请先配置该套餐的单次额度和重置次数。",
+    "feeNotConfigured": "请先配置该套餐的账号费用。",
+    "unsupported": "当前站点暂不支持费用分摊。",
+    "loadFailed": "分摊数据读取失败",
+    "empty": "当前区间没有可分摊的 USD 用量。"
+  },
+  "tooltip": {
+    "usageCost": "原始用量",
+    "usageShare": "占总额度",
+    "allocatedCost": "分摊费用"
+  }
+}
