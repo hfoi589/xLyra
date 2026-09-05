@@ -12,6 +12,8 @@ const (
 	StatusActive   = "active"
 	StatusStopped  = "stopped"
 
+	firstQuotaCheckDelay = 10 * time.Minute
+
 	StopReasonManual                = "manual"
 	StopReasonQuotaRecovered        = "weekly_quota_recovered"
 	StopReasonStartupQuotaRecovered = "startup_quota_recovered"
@@ -28,13 +30,14 @@ type errSentinel string
 func (e errSentinel) Error() string { return string(e) }
 
 type Session struct {
-	ID               uuid.UUID  `json:"id"`
-	Status           string     `json:"status"`
-	StartedAt        time.Time  `json:"started_at"`
-	StoppedAt        *time.Time `json:"stopped_at,omitempty"`
-	StopReason       string     `json:"stop_reason,omitempty"`
-	LastQuotaCheckAt *time.Time `json:"last_quota_check_at,omitempty"`
-	QuotaCheck       QuotaCheck `json:"quota_check"`
+	ID                uuid.UUID  `json:"id"`
+	Status            string     `json:"status"`
+	StartedAt         time.Time  `json:"started_at"`
+	FirstQuotaCheckAt *time.Time `json:"first_quota_check_at,omitempty"`
+	StoppedAt         *time.Time `json:"stopped_at,omitempty"`
+	StopReason        string     `json:"stop_reason,omitempty"`
+	LastQuotaCheckAt  *time.Time `json:"last_quota_check_at,omitempty"`
+	QuotaCheck        QuotaCheck `json:"quota_check"`
 }
 
 type QuotaCheck struct {
@@ -98,15 +101,16 @@ type Event struct {
 }
 
 type Status struct {
-	Active           bool       `json:"active"`
-	State            string     `json:"state"`
-	SessionID        *uuid.UUID `json:"session_id,omitempty"`
-	StartedAt        *time.Time `json:"started_at,omitempty"`
-	StoppedAt        *time.Time `json:"stopped_at,omitempty"`
-	StopReason       string     `json:"stop_reason,omitempty"`
-	EventCount       int64      `json:"event_count"`
-	LastQuotaCheckAt *time.Time `json:"last_quota_check_at,omitempty"`
-	QuotaCheck       QuotaCheck `json:"quota_check"`
+	Active            bool       `json:"active"`
+	State             string     `json:"state"`
+	SessionID         *uuid.UUID `json:"session_id,omitempty"`
+	StartedAt         *time.Time `json:"started_at,omitempty"`
+	FirstQuotaCheckAt *time.Time `json:"first_quota_check_at,omitempty"`
+	StoppedAt          *time.Time `json:"stopped_at,omitempty"`
+	StopReason         string     `json:"stop_reason,omitempty"`
+	EventCount         int64      `json:"event_count"`
+	LastQuotaCheckAt   *time.Time `json:"last_quota_check_at,omitempty"`
+	QuotaCheck         QuotaCheck `json:"quota_check"`
 }
 
 type Repository interface {

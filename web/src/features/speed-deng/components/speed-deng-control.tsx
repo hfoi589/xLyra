@@ -20,7 +20,12 @@ import {
   startSpeedDeng,
   stopSpeedDeng,
 } from '../api/speed-deng'
-import { speedDengButtonMode, speedDengStopReasonKey } from '../lib/speed-deng-utils'
+import {
+  formatSpeedDengRemainingWait,
+  speedDengFirstQuotaCheckState,
+  speedDengToolbarMode,
+} from '../lib/speed-deng-presentation'
+import { speedDengStopReasonKey } from '../lib/speed-deng-utils'
 import type { SpeedDengStatus } from '../lib/types'
 
 export function SpeedDengControl() {
@@ -62,13 +67,12 @@ export function SpeedDengControl() {
   })
 
   const status = statusQuery.data
-  const mode = speedDengButtonMode(status)
+  const mode = speedDengToolbarMode(status)
   const pending = statusQuery.isLoading || startMutation.isPending || stopMutation.isPending
 
   function handleButton() {
-    if (mode === 'stop') {
+    if (mode === 'view-stop') {
       setOpen(true)
-      stopMutation.mutate()
       return
     }
     startMutation.mutate()
@@ -76,16 +80,39 @@ export function SpeedDengControl() {
 
   return (
     <>
-      <Button
-        type="button"
-        variant={mode === 'stop' ? 'destructive' : 'outline'}
-        onClick={handleButton}
-        disabled={pending || Boolean(statusQuery.error)}
-        aria-pressed={mode === 'stop'}
-      >
-        {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : mode === 'stop' ? <Square className="h-4 w-4" /> : <Power className="h-4 w-4" />}
-        {mode === 'stop' ? t('button.stop') : t('button.start')}
-      </Button>
+      {mode === 'view-stop' ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleButton}
+            disabled={pending || Boolean(statusQuery.error)}
+          >
+            {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
+            {t('button.view')}
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={() => stopMutation.mutate()}
+            disabled={pending || Boolean(statusQuery.error)}
+            aria-pressed="true"
+          >
+            {stopMutation.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+            {t('button.stop')}
+          </Button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleButton}
+          disabled={pending || Boolean(statusQuery.error)}
+        >
+          {startMutation.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
+          {t('button.start')}
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
@@ -119,6 +146,8 @@ function SpeedDengStatusBody({ status, language }: { status?: SpeedDengStatus; l
     return <div className="flex min-h-[180px] items-center justify-center text-sm text-muted-soft"><LoaderCircle className="mr-2 h-4 w-4 animate-spin" />{t('dialog.loading')}</div>
   }
   const quota = status.quota_check ?? { eligible_count: 0, checked_count: 0, skipped_count: 0, recovered: false }
+  const firstQuotaCheck = speedDengFirstQuotaCheckState(status)
+  const waitText = formatSpeedDengRemainingWait(firstQuotaCheck.remainingMs, language)
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 rounded-xl border border-[hsl(var(--glass-border))] bg-[hsl(var(--surface-panel))] px-4 py-3" aria-live="polite">
@@ -132,10 +161,13 @@ function SpeedDengStatusBody({ status, language }: { status?: SpeedDengStatus; l
         <StatusValue label={t('dialog.eventCount')} value={status.event_count.toLocaleString()} />
         <StatusValue label={t('dialog.lastCheck')} value={formatTimestamp(status.last_quota_check_at, language)} />
         <StatusValue label={t('dialog.quotaChecked')} value={`${quota.checked_count}/${quota.eligible_count}`} />
+        <StatusValue label={t('dialog.firstQuotaCheckAt')} value={formatTimestamp(firstQuotaCheck.firstQuotaCheckAt, language)} />
+        <StatusValue label={t('dialog.firstQuotaWait')} value={firstQuotaCheck.waiting ? waitText ?? t('dialog.firstQuotaReady') : t('dialog.firstQuotaReady')} />
       </div>
       {quota.skipped_count > 0 ? <p className="text-xs text-amber-200">{t('dialog.quotaSkipped', { count: quota.skipped_count })}</p> : null}
       {quota.warning ? <p className="rounded-lg border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-xs text-amber-100">{t('dialog.quotaWarning')}: {quota.warning}</p> : null}
       {status.stop_reason ? <p className="text-xs text-muted-soft">{t('dialog.stopReason')}: {t(`stopReasons.${speedDengStopReasonKey(status.stop_reason)}`)}</p> : null}
+      {firstQuotaCheck.waiting && waitText ? <p className="text-xs text-muted-soft">{t('dialog.firstQuotaPending', { duration: waitText })}</p> : null}
     </div>
   )
 }

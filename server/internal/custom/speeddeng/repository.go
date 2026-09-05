@@ -17,6 +17,7 @@ type sessionRecord struct {
 	ID                 uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	Status             string    `gorm:"index:custom_speed_deng_sessions_status_idx"`
 	StartedAt          time.Time `gorm:"index:custom_speed_deng_sessions_started_at_idx"`
+	FirstQuotaCheckAt  *time.Time
 	StoppedAt          *time.Time
 	StopReason         string
 	LastQuotaCheckAt   *time.Time
@@ -128,7 +129,7 @@ func (r *repository) Start(ctx context.Context, now time.Time) (Session, error) 
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
-		row := sessionRecord{ID: uuid.New(), Status: StatusActive, StartedAt: now}
+		row := newSessionRecord(now)
 		if err := tx.Create(&row).Error; err != nil {
 			return err
 		}
@@ -258,19 +259,33 @@ func (r *repository) DeleteBefore(ctx context.Context, cutoff time.Time) (int64,
 
 func sessionFromRecord(row sessionRecord) Session {
 	return Session{
-		ID:               row.ID,
-		Status:           row.Status,
-		StartedAt:        row.StartedAt,
-		StoppedAt:        row.StoppedAt,
-		StopReason:       row.StopReason,
-		LastQuotaCheckAt: row.LastQuotaCheckAt,
-		QuotaCheck: QuotaCheck{
+		ID:                row.ID,
+		Status:            row.Status,
+		StartedAt:         row.StartedAt,
+		FirstQuotaCheckAt: row.FirstQuotaCheckAt,
+		StoppedAt:         row.StoppedAt,
+		StopReason:        row.StopReason,
+		LastQuotaCheckAt:  row.LastQuotaCheckAt,
+		QuotaCheck:        QuotaCheck{
 			EligibleCount: row.QuotaEligibleCount,
 			CheckedCount:  row.QuotaCheckedCount,
 			SkippedCount:  row.QuotaSkippedCount,
 			Recovered:     row.QuotaRecovered,
 			Warning:       row.QuotaWarning,
 		},
+	}
+}
+
+func newSessionRecord(now time.Time) sessionRecord {
+	if now.IsZero() {
+		now = time.Now()
+	}
+	firstQuotaCheckAt := now.Add(firstQuotaCheckDelay)
+	return sessionRecord{
+		ID:                uuid.New(),
+		Status:            StatusActive,
+		StartedAt:         now,
+		FirstQuotaCheckAt: &firstQuotaCheckAt,
 	}
 }
 

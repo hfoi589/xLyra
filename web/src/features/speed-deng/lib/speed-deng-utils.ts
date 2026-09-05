@@ -1,9 +1,3 @@
-import type { SpeedDengStatus } from './types'
-
-export function speedDengButtonMode(status?: SpeedDengStatus | null): 'start' | 'stop' {
-  return status?.active ? 'stop' : 'start'
-}
-
 export function speedDengStopReasonKey(reason?: string | null) {
   switch (reason) {
     case 'manual': return 'manual'

@@ -13,6 +13,7 @@ export type SpeedDengStatus = {
   started_at?: string | null
   stopped_at?: string | null
   stop_reason?: string | null
+  first_quota_check_at?: string | null
   event_count: number
   last_quota_check_at?: string | null
   quota_check?: SpeedDengQuotaCheck

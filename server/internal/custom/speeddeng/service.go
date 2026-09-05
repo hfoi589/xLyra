@@ -231,6 +231,9 @@ func (s *Service) CheckAndAutoStop(ctx context.Context, now time.Time, startup b
 	if active.Status != StatusActive {
 		return s.statusForSession(ctx, active), nil
 	}
+	if !startup && active.FirstQuotaCheckAt != nil && now.Before(*active.FirstQuotaCheckAt) {
+		return s.statusForSession(ctx, active), nil
+	}
 	targets, err := s.provider.ListEligibleCodexOAuth(ctx)
 	if err != nil {
 		check := QuotaCheck{Warning: err.Error()}
@@ -368,11 +371,12 @@ func (s *Service) statusForSession(ctx context.Context, session Session) Status 
 		Active:           session.Status == StatusActive,
 		State:            session.Status,
 		SessionID:        uuidPtr(session.ID),
-		StartedAt:        timePtr(session.StartedAt),
-		StoppedAt:        session.StoppedAt,
-		StopReason:       session.StopReason,
-		LastQuotaCheckAt: session.LastQuotaCheckAt,
-		QuotaCheck:       session.QuotaCheck,
+		StartedAt:         timePtr(session.StartedAt),
+		FirstQuotaCheckAt: session.FirstQuotaCheckAt,
+		StoppedAt:         session.StoppedAt,
+		StopReason:        session.StopReason,
+		LastQuotaCheckAt:  session.LastQuotaCheckAt,
+		QuotaCheck:        session.QuotaCheck,
 	}
 	if status.State == "" {
 		if status.Active {

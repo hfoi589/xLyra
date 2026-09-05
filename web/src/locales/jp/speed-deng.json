@@ -1,6 +1,7 @@
 {
   "button": {
     "start": "雷速蹬を開始",
+    "view": "雷速蹬の状態を見る",
     "stop": "雷速蹬を停止"
   },
   "status": {
@@ -16,6 +17,10 @@
     "eventCount": "収集リクエスト",
     "lastCheck": "最終クォータ確認",
     "quotaChecked": "確認済みアカウント",
+    "firstQuotaCheckAt": "最初のクォータ確認時刻",
+    "firstQuotaWait": "最初の確認待ち",
+    "firstQuotaReady": "最初の確認を開始可能",
+    "firstQuotaPending": "最初の自動確認は {{duration}} 後に実行されます",
     "quotaSkipped": "この回は {{count}} 件をスキップ",
     "quotaWarning": "クォータ確認メモ",
     "stopReason": "停止理由"

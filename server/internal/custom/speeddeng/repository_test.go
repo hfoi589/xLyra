@@ -16,6 +16,26 @@ func TestCustomRecordsUseDedicatedTableNames(t *testing.T) {
 	}
 }
 
+func TestNewSessionRecordSchedulesFirstQuotaCheckAfterTenMinutes(t *testing.T) {
+	now := time.Date(2026, 9, 5, 10, 0, 0, 0, time.UTC)
+	record := newSessionRecord(now)
+	if record.FirstQuotaCheckAt == nil {
+		t.Fatal("FirstQuotaCheckAt = nil, want scheduled check time")
+	}
+	want := now.Add(10 * time.Minute)
+	if !record.FirstQuotaCheckAt.Equal(want) {
+		t.Fatalf("FirstQuotaCheckAt = %v, want %v", *record.FirstQuotaCheckAt, want)
+	}
+}
+
+func TestSessionFromRecordMapsFirstQuotaCheckAt(t *testing.T) {
+	firstCheck := time.Date(2026, 9, 5, 10, 10, 0, 0, time.UTC)
+	session := sessionFromRecord(sessionRecord{ID: uuid.New(), Status: StatusActive, FirstQuotaCheckAt: &firstCheck})
+	if session.FirstQuotaCheckAt == nil || !session.FirstQuotaCheckAt.Equal(firstCheck) {
+		t.Fatalf("FirstQuotaCheckAt = %v, want %v", session.FirstQuotaCheckAt, firstCheck)
+	}
+}
+
 func TestEventRecordSnapshotsSpeedDengFields(t *testing.T) {
 	cost := 0.125
 	input := CaptureInput{

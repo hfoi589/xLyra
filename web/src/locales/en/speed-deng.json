@@ -1,6 +1,7 @@
 {
   "button": {
     "start": "Start Lei Sudeng",
+    "view": "View Lei Sudeng status",
     "stop": "Stop Lei Sudeng"
   },
   "status": {
@@ -16,6 +17,10 @@
     "eventCount": "Captured requests",
     "lastCheck": "Last quota check",
     "quotaChecked": "Accounts checked",
+    "firstQuotaCheckAt": "First quota check time",
+    "firstQuotaWait": "First check wait",
+    "firstQuotaReady": "First check is ready",
+    "firstQuotaPending": "The first automatic check runs in {{duration}}",
     "quotaSkipped": "{{count}} account(s) skipped this round",
     "quotaWarning": "Quota check notice",
     "stopReason": "Stop reason"

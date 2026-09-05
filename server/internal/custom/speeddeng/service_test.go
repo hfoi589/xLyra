@@ -311,6 +311,69 @@ func TestAutoCheckStopsWhenAnyEligibleAccountRecoversAbove99Percent(t *testing.T
 	}
 }
 
+func TestAutoCheckSkipsQuotaRefreshBeforeFirstScheduledCheck(t *testing.T) {
+	siteID := uuid.New()
+	now := time.Date(2026, 9, 5, 10, 0, 0, 0, time.UTC)
+	firstCheck := now.Add(10 * time.Minute)
+	repo := &fakeRepository{active: &Session{ID: uuid.New(), Status: StatusActive, StartedAt: now, FirstQuotaCheckAt: &firstCheck}}
+	provider := fakeQuotaProvider{
+		targets:   []QuotaTarget{{SiteID: siteID}},
+		snapshots: map[uuid.UUID]QuotaSnapshot{siteID: {HasWeekly: true, WeeklyRemainingPercent: 100}},
+	}
+	service := NewServiceWithDependencies(repo, provider, config.LoadTimeZone("UTC"), nil)
+
+	status, err := service.CheckAndAutoStop(context.Background(), now.Add(9*time.Minute), false)
+	if err != nil {
+		t.Fatalf("CheckAndAutoStop error = %v", err)
+	}
+	if !status.Active || repo.stopCalls != 0 {
+		t.Fatalf("status/session = %#v/%#v, want active and not stopped", status, repo.active)
+	}
+	if len(repo.checks) != 0 {
+		t.Fatalf("quota checks = %d, want no quota check before scheduled time", len(repo.checks))
+	}
+}
+
+func TestAutoCheckRefreshesAndStopsAtFirstScheduledCheck(t *testing.T) {
+	siteID := uuid.New()
+	now := time.Date(2026, 9, 5, 10, 0, 0, 0, time.UTC)
+	firstCheck := now.Add(10 * time.Minute)
+	repo := &fakeRepository{active: &Session{ID: uuid.New(), Status: StatusActive, StartedAt: now, FirstQuotaCheckAt: &firstCheck}}
+	provider := fakeQuotaProvider{
+		targets:   []QuotaTarget{{SiteID: siteID}},
+		snapshots: map[uuid.UUID]QuotaSnapshot{siteID: {HasWeekly: true, WeeklyRemainingPercent: 100}},
+	}
+	service := NewServiceWithDependencies(repo, provider, config.LoadTimeZone("UTC"), nil)
+
+	status, err := service.CheckAndAutoStop(context.Background(), firstCheck, false)
+	if err != nil {
+		t.Fatalf("CheckAndAutoStop error = %v", err)
+	}
+	if status.Active || repo.stopCalls != 1 || repo.active.StopReason != StopReasonQuotaRecovered {
+		t.Fatalf("status/session = %#v/%#v, want stopped after scheduled check", status, repo.active)
+	}
+}
+
+func TestStartupCheckBypassesFirstScheduledCheckDelay(t *testing.T) {
+	siteID := uuid.New()
+	now := time.Date(2026, 9, 5, 10, 0, 0, 0, time.UTC)
+	firstCheck := now.Add(10 * time.Minute)
+	repo := &fakeRepository{active: &Session{ID: uuid.New(), Status: StatusActive, StartedAt: now, FirstQuotaCheckAt: &firstCheck}}
+	provider := fakeQuotaProvider{
+		targets:   []QuotaTarget{{SiteID: siteID}},
+		snapshots: map[uuid.UUID]QuotaSnapshot{siteID: {HasWeekly: true, WeeklyRemainingPercent: 100}},
+	}
+	service := NewServiceWithDependencies(repo, provider, config.LoadTimeZone("UTC"), nil)
+
+	status, err := service.StartupCheck(context.Background(), now.Add(time.Minute))
+	if err != nil {
+		t.Fatalf("StartupCheck error = %v", err)
+	}
+	if status.Active || repo.stopCalls != 1 || repo.active.StopReason != StopReasonStartupQuotaRecovered {
+		t.Fatalf("status/session = %#v/%#v, want startup check to stop recovered session", status, repo.active)
+	}
+}
+
 func TestStartupCheckUsesStartupQuotaRecoveryReason(t *testing.T) {
 	siteID := uuid.New()
 	repo := &fakeRepository{active: &Session{ID: uuid.New(), Status: StatusActive}}

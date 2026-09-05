@@ -1,6 +1,7 @@
 {
   "button": {
     "start": "开启雷速蹬",
+    "view": "查看雷速蹬状态",
     "stop": "停止雷速蹬"
   },
   "status": {
@@ -16,6 +17,10 @@
     "eventCount": "已采集请求",
     "lastCheck": "最近额度检查",
     "quotaChecked": "已检查账号",
+    "firstQuotaCheckAt": "首次额度检查时间",
+    "firstQuotaWait": "首次检查等待",
+    "firstQuotaReady": "已进入首次检查",
+    "firstQuotaPending": "首次自动检查将在 {{duration}} 后执行",
     "quotaSkipped": "本轮跳过 {{count}} 个账号",
     "quotaWarning": "额度检查提示",
     "stopReason": "停止原因"
