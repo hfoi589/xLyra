@@ -26,6 +26,10 @@ type UsageSource interface {
 	Usage(ctx context.Context, siteID uuid.UUID, from time.Time, to time.Time) ([]UsageRow, error)
 }
 
+type SpeedUsageSource interface {
+	Usage(ctx context.Context, siteID uuid.UUID, from time.Time, to time.Time) ([]UsageRow, error)
+}
+
 type CostShareQuery struct {
 	SiteID      uuid.UUID
 	CreatedFrom *time.Time
@@ -38,6 +42,7 @@ type UsageRow struct {
 	APIKeyName   string
 	Cost         float64
 	RequestCount int64
+	SpeedDeng    bool
 }
 
 type CostShareItem struct {
@@ -50,6 +55,8 @@ type CostShareItem struct {
 type CostShareData struct {
 	Supported         bool            `json:"supported"`
 	UnsupportedReason string          `json:"unsupported_reason,omitempty"`
+	UsageCurrency     string          `json:"usage_currency"`
+	FeeCurrency       string          `json:"fee_currency"`
 	SiteID            string          `json:"site_id"`
 	SiteLabel         string          `json:"site_label"`
 	PlanType          string          `json:"plan_type"`
@@ -66,12 +73,15 @@ type CostShareData struct {
 }
 
 type CostShareMeta struct {
-	RangeStart          string `json:"range_start"`
-	RangeEnd            string `json:"range_end"`
-	TimeZone            string `json:"timezone"`
-	Currency            string `json:"currency"`
-	RequestCount        int64  `json:"request_count"`
-	MissingCostRequests int64  `json:"missing_cost_requests"`
+	RangeStart             string `json:"range_start"`
+	RangeEnd               string `json:"range_end"`
+	TimeZone               string `json:"timezone"`
+	Currency               string `json:"currency"`
+	FeeCurrency            string `json:"fee_currency"`
+	RequestCount           int64  `json:"request_count"`
+	MissingCostRequests    int64  `json:"missing_cost_requests"`
+	SpeedDengDataAvailable bool   `json:"speed_deng_data_available"`
+	SpeedDengWarning       string `json:"speed_deng_warning,omitempty"`
 }
 
 type CostShareResponse struct {

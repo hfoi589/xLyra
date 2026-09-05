@@ -1,10 +1,10 @@
 {
   "config": {
     "title": "OAuth account cost configuration",
-    "description": "Enter the per-plan single quota, reset count, and account fee used to allocate downstream-key costs. Amounts are in USD.",
+    "description": "Enter the per-plan single quota, reset count, and account fee used to allocate downstream-key costs. Quota/usage is USD; account fees are CNY.",
     "singleQuota": "Single quota (USD)",
     "resetCount": "Reset count",
-    "accountFee": "Account fee (USD)",
+    "accountFee": "Account fee (CNY)",
     "save": "Save configuration",
     "restore": "Restore saved",
     "saved": "OAuth cost configuration saved",
@@ -17,7 +17,7 @@
   },
   "chart": {
     "title": "Downstream-key allocated cost",
-    "description": "Shows OAuth account cost by grouped downstream-key name; model and downstream-key filters are ignored for this chart.",
+    "description": "Shows OAuth account cost by grouped downstream-key name; Lei Sudeng requests appear as “name-Lei Sudeng”. Quota/usage is USD and allocated amounts are CNY.",
     "loading": "Loading allocation data",
     "allocated": "Allocated cost",
     "ofQuota": "of quota used",
@@ -25,7 +25,9 @@
     "accountFee": "Account fee",
     "totalUsage": "Total usage",
     "totalQuota": "Total quota",
-    "overQuota": "Usage exceeds the configured quota; allocation remains formula-based."
+    "overQuota": "Usage exceeds the configured quota; allocation remains formula-based.",
+    "speedDengWarning": "Lei Sudeng data notice",
+    "unallocated": "Unallocated cost"
   },
   "states": {
     "singleSite": "Select exactly one site to view allocated cost.",

@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"xlyra/server/internal/auth"
 	"xlyra/server/internal/config"
 	"xlyra/server/internal/credential"
+	"xlyra/server/internal/custom/speeddeng"
 	"xlyra/server/internal/httpclient"
 	oauthsvc "xlyra/server/internal/oauth"
 	"xlyra/server/internal/ratelimit"
@@ -39,6 +41,17 @@ type Handler struct {
 	timeZone            config.TimeZone
 	exposeRouteSite     bool
 	cacheObservationKey []byte
+	speedDengCapture    SpeedDengCapture
+}
+
+type SpeedDengCapture interface {
+	BeginRequest(ctx context.Context) (context.Context, bool)
+	CaptureSuccess(ctx context.Context, input speeddeng.CaptureInput) error
+}
+
+func (h Handler) WithSpeedDengCapture(capture SpeedDengCapture) Handler {
+	h.speedDengCapture = capture
+	return h
 }
 
 func (h Handler) WithRouteSiteHeader() Handler {

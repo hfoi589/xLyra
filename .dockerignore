@@ -9,6 +9,7 @@
 data/
 conf/
 postgres/
+backups/
 logs/
 tmp/
 docs/

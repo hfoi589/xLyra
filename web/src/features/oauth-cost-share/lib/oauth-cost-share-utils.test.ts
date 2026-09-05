@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildCostSharePieSlices,
+  costShareWarning,
   costShareQueryFromSearch,
   costShareConfigToDraft,
   costShareQueryParams,
   draftToCostShareConfig,
 } from './oauth-cost-share-utils'
-import type { OAuthCostShareConfig, OAuthCostShareData } from './types'
+import type { OAuthCostShareConfig, OAuthCostShareData, OAuthCostShareResponse } from './types'
 
 const config: OAuthCostShareConfig = {
   plus: { single_quota: 100, reset_count: 1, account_fee: 20 },
@@ -78,5 +79,28 @@ describe('buildCostSharePieSlices', () => {
 
   it('does not add a remaining slice after quota is exceeded', () => {
     expect(buildCostSharePieSlices({ ...data, over_quota: true, unallocated_cost: 0 })).toHaveLength(2)
+  })
+
+  it('accepts a localized label for the unallocated slice', () => {
+    expect(buildCostSharePieSlices(data, 'Unallocated cost').at(-1)?.name).toBe('Unallocated cost')
+  })
+})
+
+describe('costShareWarning', () => {
+  it('keeps the speed-deng warning visible even when the result has no items', () => {
+    const response = {
+      meta: {
+        range_start: '2026-08-01T00:00:00.000Z',
+        range_end: '2026-08-02T00:00:00.000Z',
+        timezone: 'UTC',
+        currency: 'USD',
+        request_count: 0,
+        missing_cost_requests: 0,
+        speed_deng_warning: 'custom event table unavailable',
+      },
+      data: { ...data, items: [] },
+    } satisfies OAuthCostShareResponse
+
+    expect(costShareWarning(response)).toBe('custom event table unavailable')
   })
 })

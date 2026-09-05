@@ -4,6 +4,7 @@ import type {
   OAuthCostShareData,
   OAuthCostSharePieSlice,
   OAuthCostShareQuery,
+  OAuthCostShareResponse,
 } from './types'
 
 export function costShareQueryParams(query: OAuthCostShareQuery) {
@@ -41,7 +42,7 @@ export function draftToCostShareConfig(draft: OAuthCostShareConfigDraft): OAuthC
   }
 }
 
-export function buildCostSharePieSlices(data: OAuthCostShareData): OAuthCostSharePieSlice[] {
+export function buildCostSharePieSlices(data: OAuthCostShareData, unallocatedLabel = '未分摊费用'): OAuthCostSharePieSlice[] {
   if (!data.supported) return []
   const slices = data.items
     .filter((item) => item.allocated_cost > 0)
@@ -55,7 +56,7 @@ export function buildCostSharePieSlices(data: OAuthCostShareData): OAuthCostShar
     }))
   if (!data.over_quota && data.unallocated_cost > 0) {
     slices.push({
-      name: '未分摊费用',
+      name: unallocatedLabel,
       value: data.unallocated_cost,
       usage_cost: 0,
       usage_share: Math.max(1 - data.total_usage_ratio, 0),
@@ -64,6 +65,11 @@ export function buildCostSharePieSlices(data: OAuthCostShareData): OAuthCostShar
     })
   }
   return slices
+}
+
+export function costShareWarning(response?: OAuthCostShareResponse | null) {
+  const warning = response?.meta?.speed_deng_warning?.trim()
+  return warning || undefined
 }
 
 function planConfigToDraft(config: OAuthCostShareConfig['plus']) {

@@ -158,6 +158,8 @@ func TestProtectedAdminFeatureRoutesAreRegistered(t *testing.T) {
 		{name: "api keys", method: http.MethodGet, path: "/api/v1/api-keys"},
 		{name: "api key site models", method: http.MethodGet, path: "/api/v1/api-keys/11111111-1111-1111-1111-111111111111/site-models"},
 		{name: "request summary", method: http.MethodGet, path: "/api/v1/requests/summary"},
+		{name: "oauth cost share", method: http.MethodGet, path: "/api/v1/requests/oauth-cost-share?site_id=11111111-1111-1111-1111-111111111111"},
+		{name: "speed deng status", method: http.MethodGet, path: "/api/v1/settings/speed-deng"},
 		{name: "sites", method: http.MethodGet, path: "/api/v1/sites"},
 		{name: "site refresh", method: http.MethodPost, path: "/api/v1/sites/11111111-1111-1111-1111-111111111111/refresh"},
 		{name: "oauth authorize", method: http.MethodPost, path: "/api/v1/oauth/providers/codex/authorize"},
@@ -166,6 +168,7 @@ func TestProtectedAdminFeatureRoutesAreRegistered(t *testing.T) {
 		{name: "routes", method: http.MethodGet, path: "/api/v1/routes"},
 		{name: "route cooldowns", method: http.MethodGet, path: "/api/v1/routes/cooldowns"},
 		{name: "settings general", method: http.MethodGet, path: "/api/v1/settings/general"},
+		{name: "oauth cost share settings", method: http.MethodGet, path: "/api/v1/settings/oauth-cost-share"},
 		{name: "automatic backup files", method: http.MethodGet, path: "/api/v1/settings/backup/automatic/files"},
 		{name: "dashboard health", method: http.MethodGet, path: "/api/v1/dashboard/health"},
 	} {

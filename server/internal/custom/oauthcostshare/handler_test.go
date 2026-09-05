@@ -110,8 +110,8 @@ func TestCostShareHandlerReturnsServicePayload(t *testing.T) {
 	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if body.Meta.Currency != "USD" || body.Data.SiteID != siteID.String() {
-		t.Fatalf("response = %#v, want USD and site id", body)
+	if body.Meta.Currency != "USD" || body.Meta.FeeCurrency != "CNY" || body.Data.SiteID != siteID.String() {
+		t.Fatalf("response = %#v, want USD/CNY and site id", body)
 	}
 }
 

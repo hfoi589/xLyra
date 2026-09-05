@@ -918,6 +918,58 @@ func (s *Service) updateCodexConnectionSummary(ctx context.Context, connection s
 	return updated, nil
 }
 
+// RefreshCodexUsage refreshes only the Codex usage/quota summary for a
+// connection. It intentionally does not synchronize models or API-key
+// inventories; callers such as the speed-deng monitor use it at a higher
+// frequency than the normal site refresh job.
+func (s *Service) RefreshCodexUsage(ctx context.Context, connectionID uuid.UUID) (map[string]any, error) {
+	if s == nil || s.db == nil || s.db.DB() == nil {
+		return nil, fmt.Errorf("oauth store is not available")
+	}
+	repo := store.NewOAuthConnectionRepository(s.db.DB())
+	connection, err := repo.GetByID(ctx, connectionID)
+	if err != nil {
+		return nil, err
+	}
+	if !strings.EqualFold(strings.TrimSpace(connection.Provider), codexProvider) {
+		return nil, fmt.Errorf("oauth connection provider %q does not support codex usage refresh", connection.Provider)
+	}
+	details, err := s.codexConnectionDetails(connection)
+	if err != nil {
+		return nil, err
+	}
+	if connection.ExpiresAt.Valid && time.Until(connection.ExpiresAt.Time) <= codexRefreshLead {
+		details, err = s.RefreshCodexConnection(ctx, connection.ID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	siteConfig, err := s.codexAdapterSiteForConnection(ctx, details.Connection)
+	if err != nil {
+		return nil, err
+	}
+	quota, err := adapter.NewCodex().FetchQuota(ctx, siteConfig, adapter.SystemAuth{
+		Provider:     codexProvider,
+		ConnectionID: details.Connection.ID,
+		AccessToken:  details.AccessToken,
+		RefreshToken: details.RefreshToken,
+		IDToken:      details.IDToken,
+		AccountID:    details.AccountID,
+		Email:        details.Email,
+		Metadata:     details.Metadata,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(quota) == 0 {
+		return nil, fmt.Errorf("codex usage response does not contain quota data")
+	}
+	if err := s.UpdateConnectionSync(ctx, connection.ID, map[string]any{"quota": quota}); err != nil {
+		return nil, err
+	}
+	return quota, nil
+}
+
 func (s *Service) codexAdapterSiteForConnection(ctx context.Context, connection store.OAuthConnection) (adapter.SiteConfig, error) {
 	config := adapter.SiteConfig{
 		SiteType: codexProvider,

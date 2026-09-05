@@ -1,0 +1,35 @@
+{
+  "button": {
+    "start": "开启雷速蹬",
+    "stop": "停止雷速蹬"
+  },
+  "status": {
+    "active": "雷速蹬运行中",
+    "inactive": "雷速蹬未运行"
+  },
+  "dialog": {
+    "title": "雷速蹬状态",
+    "description": "只额外记录成功的 Codex OAuth 用量，不改变正常请求和源项目请求记录。",
+    "loading": "正在读取雷速蹬状态",
+    "close": "关闭",
+    "startedAt": "开始时间",
+    "eventCount": "已采集请求",
+    "lastCheck": "最近额度检查",
+    "quotaChecked": "已检查账号",
+    "quotaSkipped": "本轮跳过 {{count}} 个账号",
+    "quotaWarning": "额度检查提示",
+    "stopReason": "停止原因"
+  },
+  "stopReasons": {
+    "manual": "手动停止",
+    "weeklyQuotaRecovered": "账号 7 天额度恢复超过 99%",
+    "startupQuotaRecovered": "重启检查发现账号 7 天额度恢复超过 99%",
+    "unknown": "未知"
+  },
+  "toast": {
+    "started": "雷速蹬已开启",
+    "stopped": "雷速蹬已停止",
+    "startFailed": "雷速蹬开启失败",
+    "stopFailed": "雷速蹬停止失败"
+  }
+}

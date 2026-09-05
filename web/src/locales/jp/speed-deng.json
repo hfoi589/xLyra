@@ -1,0 +1,35 @@
+{
+  "button": {
+    "start": "雷速蹬を開始",
+    "stop": "雷速蹬を停止"
+  },
+  "status": {
+    "active": "雷速蹬は実行中",
+    "inactive": "雷速蹬は停止中"
+  },
+  "dialog": {
+    "title": "雷速蹬の状態",
+    "description": "成功した Codex OAuth の使用量だけを別記録します。通常のリクエストと元プロジェクトのログは変更しません。",
+    "loading": "雷速蹬の状態を読み込み中",
+    "close": "閉じる",
+    "startedAt": "開始時刻",
+    "eventCount": "収集リクエスト",
+    "lastCheck": "最終クォータ確認",
+    "quotaChecked": "確認済みアカウント",
+    "quotaSkipped": "この回は {{count}} 件をスキップ",
+    "quotaWarning": "クォータ確認メモ",
+    "stopReason": "停止理由"
+  },
+  "stopReasons": {
+    "manual": "手動停止",
+    "weeklyQuotaRecovered": "アカウントの 7 日クォータが 99% 超まで回復",
+    "startupQuotaRecovered": "再起動確認で 7 日クォータが 99% 超まで回復したアカウントを検出",
+    "unknown": "不明"
+  },
+  "toast": {
+    "started": "雷速蹬を開始しました",
+    "stopped": "雷速蹬を停止しました",
+    "startFailed": "雷速蹬の開始に失敗しました",
+    "stopFailed": "雷速蹬の停止に失敗しました"
+  }
+}

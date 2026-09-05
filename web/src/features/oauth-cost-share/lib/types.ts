@@ -28,6 +28,8 @@ export type OAuthCostShareItem = {
 export type OAuthCostShareData = {
   supported: boolean
   unsupported_reason?: string
+  usage_currency?: string
+  fee_currency?: string
   site_id: string
   site_label: string
   plan_type: string
@@ -49,8 +51,11 @@ export type OAuthCostShareResponse = {
     range_end: string
     timezone: string
     currency: string
+    fee_currency?: string
     request_count: number
     missing_cost_requests: number
+    speed_deng_data_available?: boolean
+    speed_deng_warning?: string
   }
   data: OAuthCostShareData
 }

@@ -16,6 +16,8 @@ import (
 	"xlyra/server/internal/backup"
 	"xlyra/server/internal/catalog"
 	"xlyra/server/internal/config"
+	"xlyra/server/internal/custom/speeddeng"
+	oauthsvc "xlyra/server/internal/oauth"
 	"xlyra/server/internal/observability"
 	"xlyra/server/internal/scheduler"
 	"xlyra/server/internal/site"
@@ -114,6 +116,12 @@ func run() int {
 
 	logger.Info("business services initializing")
 	siteService := site.NewServiceWithTimeZone(db, masterKey, appTimeZone, confFile)
+	oauthService := oauthsvc.NewService(db, masterKey, confFile)
+	speedDengService := speeddeng.NewService(db, speeddeng.NewDatabaseQuotaProvider(db, oauthService), appTimeZone, logger.With("thread", "speed-deng"))
+	if err := speeddeng.EnsureSchema(db); err != nil {
+		logger.Error("speed-deng database initialization failed", "error", err)
+		return 1
+	}
 	syncService := catalog.NewSyncService(db, logger.With("thread", "models-dev-sync"), confFile)
 	usageSummaryService := usage.NewSummaryService(db, confFile, appTimeZone)
 	backupService := backup.NewService(db, confFile, masterKey, filepath.Join(config.ResolveWorkdir(), "playground"), appTimeZone)
@@ -123,13 +131,13 @@ func run() int {
 		logger.Warn("startup canonical model category reconciliation failed", "error", err)
 	}
 	reconcileCancel()
-	router, gatewayHandler := app.NewRouterWithGateway(cfg, logger, db, confFile, masterKey)
+	router, gatewayHandler := app.NewRouterWithGateway(cfg, logger, db, confFile, masterKey, speedDengService)
 	schedule := scheduler.New(logger.With("thread", "scheduler"), scheduler.Options{
 		SiteHealthInterval: cfg.SiteHealthInterval,
 		SiteHealthTimeout:  cfg.SiteHealthTimeout,
 		SiteHealthWorkers:  cfg.SiteHealthWorkers,
 		ConfigFile:         confFile,
-	}, siteService, syncService, usageSummaryService, automaticBackupService).WithModelsCacheInvalidator(gatewayHandler.InvalidateModelsCache)
+	}, siteService, syncService, usageSummaryService, automaticBackupService).WithModelsCacheInvalidator(gatewayHandler.InvalidateModelsCache).WithSpeedDeng(speedDengService)
 	logger.Info("business services ready")
 
 	logger.Info("scheduler initializing", "site_health_interval", cfg.SiteHealthInterval, "site_health_timeout", cfg.SiteHealthTimeout, "site_health_workers", cfg.SiteHealthWorkers)
@@ -137,6 +145,14 @@ func run() int {
 	schedule.Start()
 	defer schedule.Stop()
 	logger.Info("scheduler started")
+
+	startupQuotaCtx, startupQuotaCancel := context.WithTimeout(context.Background(), 45*time.Second)
+	if status, err := speedDengService.StartupCheck(startupQuotaCtx, time.Now()); err != nil {
+		logger.Warn("speed-deng startup quota check failed", "error", err)
+	} else if status.State != speeddeng.StatusInactive {
+		logger.Info("speed-deng startup quota check completed", "active", status.Active, "stop_reason", status.StopReason, "checked", status.QuotaCheck.CheckedCount, "skipped", status.QuotaCheck.SkippedCount)
+	}
+	startupQuotaCancel()
 
 	// Startup background tasks are tied to a shutdown-linked context and joined
 	// before the DB is closed, so cancelling on shutdown stops them promptly and

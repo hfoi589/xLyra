@@ -1,0 +1,35 @@
+{
+  "button": {
+    "start": "Start Lei Sudeng",
+    "stop": "Stop Lei Sudeng"
+  },
+  "status": {
+    "active": "Lei Sudeng is running",
+    "inactive": "Lei Sudeng is inactive"
+  },
+  "dialog": {
+    "title": "Lei Sudeng status",
+    "description": "Only successful Codex OAuth usage is recorded separately; normal requests and source logs are unchanged.",
+    "loading": "Loading Lei Sudeng status",
+    "close": "Close",
+    "startedAt": "Started",
+    "eventCount": "Captured requests",
+    "lastCheck": "Last quota check",
+    "quotaChecked": "Accounts checked",
+    "quotaSkipped": "{{count}} account(s) skipped this round",
+    "quotaWarning": "Quota check notice",
+    "stopReason": "Stop reason"
+  },
+  "stopReasons": {
+    "manual": "Stopped manually",
+    "weeklyQuotaRecovered": "An account recovered above 99% of its 7-day quota",
+    "startupQuotaRecovered": "Startup check found an account recovered above 99% of its 7-day quota",
+    "unknown": "Unknown"
+  },
+  "toast": {
+    "started": "Lei Sudeng started",
+    "stopped": "Lei Sudeng stopped",
+    "startFailed": "Failed to start Lei Sudeng",
+    "stopFailed": "Failed to stop Lei Sudeng"
+  }
+}

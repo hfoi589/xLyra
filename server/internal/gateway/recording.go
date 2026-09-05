@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"xlyra/server/internal/custom/speeddeng"
 	routeengine "xlyra/server/internal/router"
 )
 
@@ -61,10 +62,34 @@ func (h Handler) recordAttempt(
 		ParentRequestLogID:         parentLogID,
 	})
 	if err != nil {
-		h.logger.WarnContext(ctx, "failed to record gateway attempt", "scope", "gateway", "endpoint", result.downstreamPath, "error", err, "request_id", attemptRequestID, "status_code", result.statusCode, "error_code", result.errorType)
+		if h.logger != nil {
+			h.logger.WarnContext(ctx, "failed to record gateway attempt", "scope", "gateway", "endpoint", result.downstreamPath, "error", err, "request_id", attemptRequestID, "status_code", result.statusCode, "error_code", result.errorType)
+		}
 		return uuid.Nil
 	}
+	if h.speedDengCapture != nil {
+		if sessionID, ok := speeddeng.SessionIDFromContext(ctx); ok {
+			if input, captureOK := speedDengCaptureInput(ctx, sessionID, requestID, apiKeyID, candidate, result, requestLog.ID); captureOK {
+				input.CreatedAt = requestLog.CreatedAt
+				_ = h.recordSpeedDengEvent(ctx, input)
+			}
+		}
+	}
 	return requestLog.ID
+}
+
+func (h Handler) recordSpeedDengEvent(ctx context.Context, input speeddeng.CaptureInput) error {
+	if h.speedDengCapture == nil {
+		return nil
+	}
+	if err := h.speedDengCapture.CaptureSuccess(ctx, input); err != nil {
+		if h.logger != nil {
+			h.logger.WarnContext(ctx, "failed to record speed-deng event", "scope", "gateway", "error", err, "source_request_log_id", input.SourceRequestLogID)
+		}
+		// This extension is deliberately best-effort. The source request has
+		// already committed and must never be rolled back for a custom write.
+	}
+	return nil
 }
 
 func (h Handler) recordRequestFailure(

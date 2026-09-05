@@ -84,13 +84,25 @@ func (h Handler) serveEndpoint(
 		return
 	}
 
+	// Capture the active session before parsing the request body. A request that
+	// has already entered the gateway must remain attributed to the session that
+	// was active at entry, even if parsing or route setup finishes after a
+	// concurrent manual/automatic stop.
+	ctx := r.Context()
+	if h.speedDengCapture != nil {
+		if capturedCtx, ok := h.speedDengCapture.BeginRequest(ctx); ok {
+			ctx = capturedCtx
+			r = r.WithContext(ctx)
+		}
+	}
+
 	request, failure := endpoint.DecodeRequest(r)
 	if failure != nil {
 		h.writeChatFailure(w, r, endpoint.DownstreamPath(), requestID, apiKey.ID, startedAt, *failure)
 		return
 	}
 
-	ctx := withReasoningEffort(r.Context(), reasoningEffortFromPayload(request.Payload))
+	ctx = withReasoningEffort(ctx, reasoningEffortFromPayload(request.Payload))
 	r = r.WithContext(ctx)
 	originalModel := request.RequestedModel
 	mappingRule, hasMapping := h.resolveModelMapping(apiKey, request.RequestedModel)

@@ -194,6 +194,13 @@ func (a Codex) FetchBalance(ctx context.Context, site SiteConfig, auth SystemAut
 	return BalanceSnapshot{Raw: usage}, nil
 }
 
+// FetchQuota retrieves and normalizes only the Codex usage/quota endpoint. It
+// deliberately avoids the model inventory call made by FetchUserSummary so
+// high-frequency quota monitors do not cause model-sync traffic.
+func (a Codex) FetchQuota(ctx context.Context, site SiteConfig, auth SystemAuth) (map[string]any, error) {
+	return a.fetchUsage(ctx, site, auth.AccessToken, auth.AccountID)
+}
+
 func (a Codex) FetchMetadata(ctx context.Context, site SiteConfig, auth SystemAuth) (MetadataSnapshot, error) {
 	usage, err := a.fetchUsage(ctx, site, auth.AccessToken, auth.AccountID)
 	if err != nil {

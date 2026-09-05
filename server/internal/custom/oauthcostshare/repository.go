@@ -12,12 +12,58 @@ import (
 	"gorm.io/gorm"
 
 	"xlyra/server/internal/config"
+	"xlyra/server/internal/custom/speeddeng"
 	"xlyra/server/internal/store"
 )
 
 type repository struct {
 	db       *store.Store
 	timeZone config.TimeZone
+}
+
+type speedRepository struct {
+	source speeddeng.EventSource
+}
+
+func newSpeedRepository(db *store.Store) SpeedUsageSource {
+	source := speeddeng.NewEventSource(db)
+	if source == nil {
+		return nil
+	}
+	return &speedRepository{source: source}
+}
+
+func (r *speedRepository) Usage(ctx context.Context, siteID uuid.UUID, from time.Time, to time.Time) ([]UsageRow, error) {
+	if r == nil || r.source == nil {
+		return nil, fmt.Errorf("speed-deng event store is not initialized")
+	}
+	events, err := r.source.ListEvents(ctx, siteID, from, to)
+	if err != nil {
+		return nil, fmt.Errorf("list speed-deng events: %w", err)
+	}
+	rows := make([]UsageRow, 0, len(events))
+	for _, event := range events {
+		if currency := strings.TrimSpace(event.Currency); currency != "" && !strings.EqualFold(currency, "USD") {
+			continue
+		}
+		cost := float64(0)
+		if event.EstimatedCostUSD != nil {
+			cost = *event.EstimatedCostUSD
+		}
+		apiKeyKey := ""
+		if event.APIKeyID != uuid.Nil {
+			apiKeyKey = event.APIKeyID.String()
+		}
+		rows = append(rows, UsageRow{
+			ModelKey:     event.ModelKey,
+			APIKeyKey:    apiKeyKey,
+			APIKeyName:   event.APIKeyName,
+			Cost:         cost,
+			RequestCount: 1,
+			SpeedDeng:    true,
+		})
+	}
+	return rows, nil
 }
 
 func newRepository(db *store.Store, timeZone config.TimeZone) UsageSource {

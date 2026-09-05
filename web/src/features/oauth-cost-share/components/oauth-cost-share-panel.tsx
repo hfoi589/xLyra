@@ -17,9 +17,10 @@ import {
 } from '../api/oauth-cost-share'
 import { OAuthCostShareChart } from './oauth-cost-share-chart'
 import {
-  costShareConfigToDraft,
-  costShareQueryFromSearch,
-  draftToCostShareConfig,
+	costShareConfigToDraft,
+	costShareQueryFromSearch,
+	costShareWarning,
+	draftToCostShareConfig,
 } from '../lib/oauth-cost-share-utils'
 import type { OAuthCostShareConfig, OAuthCostShareConfigDraft } from '../lib/types'
 
@@ -78,8 +79,9 @@ export function OAuthCostSharePanel() {
     setDraft(costShareConfigToDraft(configQuery.data ?? DEFAULT_CONFIG))
   }
 
-  const data = costShareQuery.data?.data
-  const hasOneSite = Boolean(query)
+	const data = costShareQuery.data?.data
+	const speedDengWarning = costShareWarning(costShareQuery.data)
+	const hasOneSite = Boolean(query)
   const unavailableKey = data?.unsupported_reason ? unsupportedReasonKey(data.unsupported_reason) : undefined
 
   return (
@@ -142,6 +144,7 @@ export function OAuthCostSharePanel() {
             </div>
             {costShareQuery.isFetching ? <LoaderCircle className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-primary" aria-label={t('chart.loading')} /> : null}
           </div>
+          {speedDengWarning ? <p className="text-xs text-amber-200">{t('chart.speedDengWarning')}: {speedDengWarning}</p> : null}
 
           {!hasOneSite ? (
             <CostShareStatus>{t('states.singleSite')}</CostShareStatus>
@@ -161,7 +164,7 @@ export function OAuthCostSharePanel() {
               {data.over_quota ? <p className="text-xs text-amber-300">{t('chart.overQuota')}</p> : null}
               <OAuthCostShareChart data={data} />
               <div className="border-t border-[hsl(var(--glass-divider))] pt-3 text-xs text-muted-soft">
-                {data.site_label} · {t(`plans.${planKey(data.plan_type)}`)} · {t('chart.totalUsage')}: {formatUSD(data.total_usage_cost)} · {t('chart.totalQuota')}: {formatUSD(data.total_quota)}
+                {data.site_label} · {t(`plans.${planKey(data.plan_type)}`)} · {t('chart.totalUsage')}: {formatCurrency(data.total_usage_cost, data.usage_currency ?? 'USD')} · {t('chart.totalQuota')}: {formatCurrency(data.total_quota, data.usage_currency ?? 'USD')}
               </div>
             </>
           ) : null}
@@ -191,6 +194,7 @@ function planKey(value: string): PlanKey {
   return 'plus'
 }
 
-function formatUSD(value: number) {
-  return `$${value.toFixed(2)}`
+function formatCurrency(value: number, currency: string) {
+  if (currency.toUpperCase() === 'USD') return `$${value.toFixed(2)}`
+  return `${value.toFixed(2)} ${currency.toUpperCase()}`
 }

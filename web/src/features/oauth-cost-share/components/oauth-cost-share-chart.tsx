@@ -17,12 +17,14 @@ type ChartSlice = OAuthCostSharePieSlice & { color: string }
 
 export function OAuthCostShareChart({ data }: { data: OAuthCostShareData }) {
   const { t } = useTranslation('oauth-cost-share')
+  const usageCurrency = data.usage_currency ?? 'USD'
+  const feeCurrency = data.fee_currency ?? 'CNY'
   const slices = useMemo<ChartSlice[]>(
-    () => buildCostSharePieSlices(data).map((slice, index) => ({
+    () => buildCostSharePieSlices(data, t('chart.unallocated')).map((slice, index) => ({
       ...slice,
       color: slice.is_unallocated ? 'hsl(var(--text-muted-soft))' : dashboardChartColors[index % dashboardChartColors.length],
     })),
-    [data],
+    [data, t],
   )
   const total = slices.reduce((sum, slice) => sum + slice.value, 0)
 
@@ -50,14 +52,14 @@ export function OAuthCostShareChart({ data }: { data: OAuthCostShareData }) {
               isAnimationActive={false}
               labelStyle={dashboardTooltipLabelStyle}
               itemStyle={dashboardTooltipItemStyle}
-              content={(props) => <CostShareTooltip {...props} />}
+              content={(props) => <CostShareTooltip {...props} usageCurrency={usageCurrency} feeCurrency={feeCurrency} />}
             />
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
           <span className="text-xs text-muted-soft">{t('chart.allocated')}</span>
           <span className="mt-1 text-lg font-semibold tabular-nums text-foreground">
-            {formatDashboardCurrency(data.allocated_cost, 'USD', 2)}
+            {formatDashboardCurrency(data.allocated_cost, feeCurrency, 2)}
           </span>
           <span className="mt-1 text-[11px] text-muted-soft">
             {formatPercent(data.total_usage_ratio, 1)} {t('chart.ofQuota')}
@@ -71,20 +73,20 @@ export function OAuthCostShareChart({ data }: { data: OAuthCostShareData }) {
               <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: slice.color }} />
               <span className="min-w-0 flex-1 truncate text-foreground" title={slice.name}>{slice.name}</span>
               <span className="shrink-0 tabular-nums text-muted-soft">
-                {formatDashboardCurrency(slice.value, 'USD', 2)} · {formatPercent(slice.usage_share, 1)}
+                {formatDashboardCurrency(slice.value, feeCurrency, 2)} · {formatPercent(slice.usage_share, 1)}
               </span>
             </div>
           ))}
         </div>
         <div className="mt-4 border-t border-[hsl(var(--glass-divider))] pt-3 text-xs text-muted-soft">
-          {t('chart.total')}: {formatDashboardCurrency(total, 'USD', 2)} · {t('chart.accountFee')}: {formatDashboardCurrency(data.account_fee, 'USD', 2)}
+          {t('chart.total')}: {formatDashboardCurrency(total, feeCurrency, 2)} · {t('chart.accountFee')}: {formatDashboardCurrency(data.account_fee, feeCurrency, 2)}
         </div>
       </div>
     </div>
   )
 }
 
-function CostShareTooltip({ active, payload }: TooltipContentProps) {
+function CostShareTooltip({ active, payload, usageCurrency, feeCurrency }: TooltipContentProps & { usageCurrency: string; feeCurrency: string }) {
   const { t } = useTranslation('oauth-cost-share')
   if (!active || !payload?.length) return null
   const slice = payload[0]?.payload as ChartSlice | undefined
@@ -92,9 +94,9 @@ function CostShareTooltip({ active, payload }: TooltipContentProps) {
   return (
     <div style={dashboardTooltipStyle} className="min-w-[190px] space-y-1.5 text-xs">
       <p className="border-b border-[hsl(var(--glass-divider))] pb-1.5 font-medium text-foreground">{slice.name}</p>
-      {!slice.is_unallocated ? <p>{t('tooltip.usageCost')}: {formatDashboardCurrency(slice.usage_cost, 'USD', 4)}</p> : null}
+      {!slice.is_unallocated ? <p>{t('tooltip.usageCost')}: {formatDashboardCurrency(slice.usage_cost, usageCurrency, 4)}</p> : null}
       <p>{t('tooltip.usageShare')}: {formatPercent(slice.usage_share, 2)}</p>
-      <p>{t('tooltip.allocatedCost')}: {formatDashboardCurrency(slice.allocated_cost, 'USD', 4)}</p>
+      <p>{t('tooltip.allocatedCost')}: {formatDashboardCurrency(slice.allocated_cost, feeCurrency, 4)}</p>
     </div>
   )
 }

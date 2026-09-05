@@ -28,6 +28,7 @@ import { listCanonicalModels, modelsQueryKeys } from '@/features/models/api/mode
 import { listDownstreamAPIKeys, downstreamAPIKeyQueryKeys } from '@/features/api-keys/api/api-keys'
 import { listSites, sitesQueryKeys } from '@/features/sites/api/sites'
 import { normalizeAnalyticsBarData, normalizeAnalyticsSankeyData } from '@/features/oauth-cost-share/lib/statistics-display-utils'
+import { SpeedDengControl } from '@/features/speed-deng/components/speed-deng-control'
 
 type AnalyticsDraftFilters = {
   createdFrom?: Date
@@ -223,6 +224,7 @@ export function RequestsAnalyticsWorkspace() {
         eyebrow={t('page.eyebrow')}
         title={chartT('charts.title')}
         description={chartT('charts.description')}
+        actions={<SpeedDengControl />}
       />
 
       <Card className="relative z-[130] overflow-visible">

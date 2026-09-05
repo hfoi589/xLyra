@@ -14,22 +14,28 @@ import (
 )
 
 type Service struct {
-	source   UsageSource
-	confFile *config.ConfigFile
-	timeZone config.TimeZone
+	source      UsageSource
+	speedSource SpeedUsageSource
+	confFile    *config.ConfigFile
+	timeZone    config.TimeZone
 }
 
 func NewService(db *store.Store, confFile *config.ConfigFile, timeZones ...config.TimeZone) *Service {
 	timeZone := config.TimeZoneOrDefault(timeZones...)
 	return &Service{
-		source:   newRepository(db, timeZone),
-		confFile: confFile,
-		timeZone: timeZone,
+		source:      newRepository(db, timeZone),
+		speedSource: newSpeedRepository(db),
+		confFile:    confFile,
+		timeZone:    timeZone,
 	}
 }
 
 func NewServiceWithSource(source UsageSource, confFile *config.ConfigFile, timeZone config.TimeZone) *Service {
-	return &Service{source: source, confFile: confFile, timeZone: config.TimeZoneOrDefault(timeZone)}
+	return NewServiceWithSources(source, nil, confFile, timeZone)
+}
+
+func NewServiceWithSources(source UsageSource, speedSource SpeedUsageSource, confFile *config.ConfigFile, timeZone config.TimeZone) *Service {
+	return &Service{source: source, speedSource: speedSource, confFile: confFile, timeZone: config.TimeZoneOrDefault(timeZone)}
 }
 
 func (s *Service) CostShare(ctx context.Context, query CostShareQuery, now time.Time) (CostShareResponse, error) {
@@ -67,13 +73,14 @@ func (s *Service) CostShare(ctx context.Context, query CostShareQuery, now time.
 		return CostShareResponse{}, err
 	}
 	result := CostShareResponse{Meta: CostShareMeta{
-		RangeStart: from.Format(time.RFC3339Nano),
-		RangeEnd:   to.Format(time.RFC3339Nano),
-		TimeZone:   timeZone.Name,
-		Currency:   "USD",
+		RangeStart:  from.Format(time.RFC3339Nano),
+		RangeEnd:    to.Format(time.RFC3339Nano),
+		TimeZone:    timeZone.Name,
+		Currency:    "USD",
+		FeeCurrency: "CNY",
 	}}
 	if !site.IsOAuth {
-		result.Data = CostShareData{SiteID: site.ID.String(), SiteLabel: site.Name, UnsupportedReason: UnsupportedReasonOAuth, Items: []CostShareItem{}}
+		result.Data = CostShareData{UsageCurrency: "USD", FeeCurrency: "CNY", SiteID: site.ID.String(), SiteLabel: site.Name, UnsupportedReason: UnsupportedReasonOAuth, Items: []CostShareItem{}}
 		return result, nil
 	}
 	if NormalizePlanType(site.PlanType) == "" {
@@ -83,6 +90,15 @@ func (s *Service) CostShare(ctx context.Context, query CostShareQuery, now time.
 	rows, err := s.source.Usage(ctx, query.SiteID, from, to)
 	if err != nil {
 		return CostShareResponse{}, err
+	}
+	if s.speedSource != nil {
+		speedRows, speedErr := s.speedSource.Usage(ctx, query.SiteID, from, to)
+		if speedErr != nil {
+			result.Meta.SpeedDengWarning = speedErr.Error()
+		} else {
+			result.Meta.SpeedDengDataAvailable = true
+			rows = append(rows, speedRows...)
+		}
 	}
 	for _, row := range rows {
 		result.Meta.RequestCount += row.RequestCount
@@ -99,10 +115,12 @@ type costShareAccumulator struct {
 func BuildCostShare(rows []UsageRow, site OAuthSite, cfg Config) CostShareData {
 	planType := NormalizePlanType(site.PlanType)
 	data := CostShareData{
-		SiteID:    site.ID.String(),
-		SiteLabel: site.Name,
-		PlanType:  planType,
-		Items:     []CostShareItem{},
+		UsageCurrency: "USD",
+		FeeCurrency:   "CNY",
+		SiteID:        site.ID.String(),
+		SiteLabel:     site.Name,
+		PlanType:      planType,
+		Items:         []CostShareItem{},
 	}
 	if planType == "" {
 		data.UnsupportedReason = UnsupportedReasonPlan
@@ -126,6 +144,9 @@ func BuildCostShare(rows []UsageRow, site OAuthSite, cfg Config) CostShareData {
 	byName := map[string]*costShareAccumulator{}
 	for _, row := range rows {
 		key, label := NormalizeKeyName(row.APIKeyName)
+		if row.SpeedDeng {
+			key, label = NormalizeSpeedDengKeyName(row.APIKeyName)
+		}
 		item := byName[key]
 		if item == nil {
 			item = &costShareAccumulator{name: label}
@@ -162,6 +183,13 @@ func BuildCostShare(rows []UsageRow, site OAuthSite, cfg Config) CostShareData {
 	}
 	data.Supported = true
 	return data
+}
+
+func NormalizeSpeedDengKeyName(value string) (string, string) {
+	name := strings.TrimSpace(value)
+	name = strings.TrimSpace(strings.TrimSuffix(name, "-雷速蹬"))
+	key, label := NormalizeKeyName(name)
+	return key + "::speed_deng", label + "-雷速蹬"
 }
 
 func NormalizeKeyName(value string) (string, string) {

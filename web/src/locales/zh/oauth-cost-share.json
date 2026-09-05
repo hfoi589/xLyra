@@ -1,10 +1,10 @@
 {
   "config": {
     "title": "OAuth 账号费用配置",
-    "description": "按套餐录入单次额度、重置次数和账号费用，用于计算下游密钥分摊费用。金额单位为 USD。",
+    "description": "按套餐录入单次额度、重置次数和账号费用，用于计算下游密钥分摊费用；额度/用量为 USD，账号费用为 CNY。",
     "singleQuota": "单次额度（USD）",
     "resetCount": "重置次数",
-    "accountFee": "账号费用（USD）",
+    "accountFee": "账号费用（CNY）",
     "save": "保存配置",
     "restore": "恢复已保存",
     "saved": "OAuth 费用配置已保存",
@@ -17,7 +17,7 @@
   },
   "chart": {
     "title": "下游密钥分摊费用",
-    "description": "按归集后的下游密钥名称展示 OAuth 账号费用分布；该图忽略模型和下游密钥筛选。",
+    "description": "按归集后的下游密钥名称展示 OAuth 账号费用分布；雷速蹬请求以“用户名-雷速蹬”独立显示，额度/用量为 USD，分摊金额为 CNY。",
     "loading": "分摊数据加载中",
     "allocated": "已分摊费用",
     "ofQuota": "额度使用",
@@ -25,7 +25,9 @@
     "accountFee": "账号费用",
     "totalUsage": "总用量",
     "totalQuota": "总额度",
-    "overQuota": "用量已超过配置额度，分摊金额按实际公式计算。"
+    "overQuota": "用量已超过配置额度，分摊金额按实际公式计算。",
+    "speedDengWarning": "雷速蹬数据读取提示",
+    "unallocated": "未分摊费用"
   },
   "states": {
     "singleSite": "请选择一个站点后查看分摊费用。",

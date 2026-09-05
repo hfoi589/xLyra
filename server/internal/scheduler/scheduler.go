@@ -14,15 +14,18 @@ import (
 	"xlyra/server/internal/catalog"
 	"xlyra/server/internal/codexversion"
 	"xlyra/server/internal/config"
+	"xlyra/server/internal/custom/speeddeng"
 	"xlyra/server/internal/site"
 	"xlyra/server/internal/usage"
 )
 
 const (
-	usageSummaryCron          = "1 0 * * *"
-	modelPricingSyncCron      = "@every 4h"
-	codexVersionRefreshCron   = "@every 6h"
-	automaticBackupJobTimeout = 10 * time.Minute
+	usageSummaryCron             = "1 0 * * *"
+	modelPricingSyncCron         = "@every 4h"
+	codexVersionRefreshCron      = "@every 6h"
+	speedDengQuotaCron           = "@every 1m"
+	automaticBackupJobTimeout    = 10 * time.Minute
+	defaultSpeedDengQuotaTimeout = 45 * time.Second
 )
 
 // cronLogger adapts *slog.Logger to the cron.Logger interface so the
@@ -55,18 +58,26 @@ type Scheduler struct {
 	sync          *catalog.SyncService
 	usageSummary  *usage.SummaryService
 	autoBackups   *backup.AutomaticService
+	speedDeng     *speeddeng.Service
 	configuredMu  sync.Mutex
 	siteRefreshID cron.EntryID
 	checkinID     cron.EntryID
 	autoBackupID  cron.EntryID
+	speedDengID   cron.EntryID
 	running       atomic.Bool
 	syncing       atomic.Bool
 	summarizing   atomic.Bool
 	refreshing    atomic.Bool
 	checkingIn    atomic.Bool
 	versioning    atomic.Bool
+	speedChecking atomic.Bool
 
 	modelsCacheInvalidator func()
+}
+
+func (s *Scheduler) WithSpeedDeng(service *speeddeng.Service) *Scheduler {
+	s.speedDeng = service
+	return s
 }
 
 func New(logger *slog.Logger, options Options, siteService *site.Service, syncService *catalog.SyncService, usageSummaryService *usage.SummaryService, autoBackupServices ...*backup.AutomaticService) *Scheduler {
@@ -146,6 +157,17 @@ func (s *Scheduler) RegisterDefaultJobs() {
 		s.logger.Info("codex version refresh scheduler registered", "interval", codexVersionRefreshCron)
 	}
 	go s.runCodexVersionRefresh()
+
+	if s.speedDeng == nil {
+		s.logger.Debug("speed-deng quota scheduler disabled")
+	} else {
+		if id, err := s.cron.AddFunc(speedDengQuotaCron, s.runSpeedDengQuotaCheck); err != nil {
+			s.logger.Error("register speed-deng quota scheduler failed", "error", err, "cron", speedDengQuotaCron)
+		} else {
+			s.speedDengID = id
+			s.logger.Info("speed-deng quota scheduler registered", "cron", speedDengQuotaCron)
+		}
+	}
 
 	s.RegisterConfiguredJobs()
 	if s.options.ConfigFile != nil {
@@ -360,6 +382,36 @@ func (s *Scheduler) runUsageSummaryMaintenance() {
 		"deleted_hourly_rows", result.DeletedHourlyRows,
 		"duration", time.Since(start),
 	)
+	if s.speedDeng != nil {
+		general := config.ReadGeneralConfig(s.options.ConfigFile)
+		if general.Data.RequestDetailCleanupEnabled {
+			deleted, cleanupErr := s.speedDeng.CleanupWithRetention(ctx, start, general.Data.RequestDetailRetentionDays)
+			if cleanupErr != nil {
+				s.logger.Warn("speed-deng event cleanup failed", "error", cleanupErr)
+			} else if deleted > 0 {
+				s.logger.Info("speed-deng event cleanup finished", "deleted_events", deleted)
+			}
+		}
+	}
+}
+
+func (s *Scheduler) runSpeedDengQuotaCheck() {
+	if !s.speedChecking.CompareAndSwap(false, true) {
+		s.logger.Warn("speed-deng quota check skipped: previous run still active")
+		return
+	}
+	defer s.speedChecking.Store(false)
+	if s.speedDeng == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultSpeedDengQuotaTimeout)
+	defer cancel()
+	status, err := s.speedDeng.CheckAndAutoStop(ctx, time.Now(), false)
+	if err != nil {
+		s.logger.Warn("speed-deng quota check failed", "error", err)
+		return
+	}
+	s.logger.Debug("speed-deng quota check completed", "active", status.Active, "checked", status.QuotaCheck.CheckedCount, "skipped", status.QuotaCheck.SkippedCount, "recovered", status.QuotaCheck.Recovered)
 }
 
 func (s *Scheduler) runConfiguredSiteRefresh() {

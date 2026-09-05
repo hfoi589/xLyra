@@ -2,6 +2,7 @@ package oauthcostshare
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -15,12 +16,21 @@ type fakeSource struct {
 	rows []UsageRow
 }
 
+type fakeSpeedSource struct {
+	rows []UsageRow
+	err  error
+}
+
 func (f fakeSource) Site(context.Context, uuid.UUID) (OAuthSite, error) {
 	return f.site, nil
 }
 
 func (f fakeSource) Usage(context.Context, uuid.UUID, time.Time, time.Time) ([]UsageRow, error) {
 	return f.rows, nil
+}
+
+func (f fakeSpeedSource) Usage(context.Context, uuid.UUID, time.Time, time.Time) ([]UsageRow, error) {
+	return f.rows, f.err
 }
 
 func TestBuildCostShareGroupsNamesAcrossModelsAndAllocatesAccountFee(t *testing.T) {
@@ -51,6 +61,35 @@ func TestBuildCostShareGroupsNamesAcrossModelsAndAllocatesAccountFee(t *testing.
 	wilson := got.Items[0]
 	if wilson.Name != "Wilson" || wilson.UsageCost != 40 || wilson.UsageShare != 0.2 || wilson.AllocatedCost != 4 {
 		t.Fatalf("Wilson item = %#v, want grouped usage and allocation", wilson)
+	}
+}
+
+func TestBuildCostShareSeparatesSpeedDengNameAndUsesCNYFee(t *testing.T) {
+	t.Parallel()
+
+	cfg := Config{Plus: PlanConfig{SingleQuota: 100, ResetCount: 0, AccountFee: 20}}
+	site := OAuthSite{ID: uuid.New(), Name: "Codex OAuth", PlanType: "plus"}
+	rows := []UsageRow{
+		{APIKeyName: "Wilson", Cost: 20},
+		{APIKeyName: "Wilson", Cost: 10, SpeedDeng: true},
+	}
+
+	got := BuildCostShare(rows, site, cfg)
+	if got.UsageCurrency != "USD" || got.FeeCurrency != "CNY" {
+		t.Fatalf("currencies = %q/%q, want USD/CNY", got.UsageCurrency, got.FeeCurrency)
+	}
+	if got.TotalUsageCost != 30 || got.TotalUsageRatio != 0.3 || got.AllocatedCost != 6 {
+		t.Fatalf("summary = %#v, want usage=30 ratio=.3 allocated=6 CNY", got)
+	}
+	if len(got.Items) != 2 {
+		t.Fatalf("items = %#v, want separate Wilson and Wilson-雷速蹬", got.Items)
+	}
+	seen := map[string]bool{}
+	for _, item := range got.Items {
+		seen[item.Name] = true
+	}
+	if !seen["Wilson"] || !seen["Wilson-雷速蹬"] {
+		t.Fatalf("items = %#v, want separate Wilson and Wilson-雷速蹬", got.Items)
 	}
 }
 
@@ -139,11 +178,50 @@ func TestServiceCostShareUsesConfiguredOAuthPlanAndDateRange(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CostShare returned error: %v", err)
 	}
-	if result.Meta.Currency != "USD" || result.Meta.RequestCount != 3 {
-		t.Fatalf("meta = %#v, want USD and request count 3", result.Meta)
+	if result.Meta.Currency != "USD" || result.Meta.FeeCurrency != "CNY" || result.Meta.RequestCount != 3 {
+		t.Fatalf("meta = %#v, want USD/CNY and request count 3", result.Meta)
 	}
 	if result.Data.SiteID != siteID.String() || result.Data.PlanType != "plus" || result.Data.AllocatedCost != 4 {
 		t.Fatalf("data = %#v, want normalized plan and allocated cost 4", result.Data)
+	}
+}
+
+func TestServiceCostShareMergesSpeedRowsAndReportsSpeedQueryWarning(t *testing.T) {
+	t.Parallel()
+
+	siteID := uuid.New()
+	base := fakeSource{
+		site: OAuthSite{ID: siteID, Name: "Codex", PlanType: "plus", IsOAuth: true},
+		rows: []UsageRow{{APIKeyName: "Wilson", Cost: 20, RequestCount: 1}},
+	}
+	cfgFile, err := config.LoadConfigFile(t.TempDir())
+	if err != nil {
+		t.Fatalf("load config file: %v", err)
+	}
+	if err := SaveConfig(cfgFile, Config{Plus: PlanConfig{SingleQuota: 100, AccountFee: 20}}); err != nil {
+		t.Fatalf("save config: %v", err)
+	}
+	from := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	to := from.Add(24 * time.Hour)
+
+	service := NewServiceWithSources(base, fakeSpeedSource{
+		rows: []UsageRow{{APIKeyName: "Wilson", Cost: 10, RequestCount: 2, SpeedDeng: true}},
+	}, cfgFile, config.LoadTimeZone("UTC"))
+	result, err := service.CostShare(context.Background(), CostShareQuery{SiteID: siteID, CreatedFrom: &from, CreatedTo: &to}, to)
+	if err != nil {
+		t.Fatalf("merged CostShare error = %v", err)
+	}
+	if result.Meta.RequestCount != 3 || !result.Meta.SpeedDengDataAvailable || result.Data.TotalUsageCost != 30 {
+		t.Fatalf("merged result = %#v, want count=3 speed available usage=30", result)
+	}
+
+	degraded := NewServiceWithSources(base, fakeSpeedSource{err: errors.New("custom table unavailable")}, cfgFile, config.LoadTimeZone("UTC"))
+	result, err = degraded.CostShare(context.Background(), CostShareQuery{SiteID: siteID, CreatedFrom: &from, CreatedTo: &to}, to)
+	if err != nil {
+		t.Fatalf("degraded CostShare error = %v", err)
+	}
+	if result.Data.TotalUsageCost != 20 || result.Meta.SpeedDengDataAvailable || result.Meta.SpeedDengWarning == "" {
+		t.Fatalf("degraded result = %#v, want source-only data with warning", result)
 	}
 }
 

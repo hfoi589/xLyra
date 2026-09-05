@@ -7,6 +7,7 @@ import (
 
 	"xlyra/server/internal/catalog"
 	"xlyra/server/internal/config"
+	"xlyra/server/internal/custom/speeddeng"
 	"xlyra/server/internal/site"
 	"xlyra/server/internal/usage"
 )
@@ -24,6 +25,39 @@ func TestModelPricingSyncCronRunsEveryFourHours(t *testing.T) {
 
 	if modelPricingSyncCron != "@every 4h" {
 		t.Fatalf("unexpected model pricing sync cron: %s", modelPricingSyncCron)
+	}
+}
+
+func TestSpeedDengQuotaCronRunsEveryMinute(t *testing.T) {
+	t.Parallel()
+
+	if speedDengQuotaCron != "@every 1m" {
+		t.Fatalf("unexpected speed-deng quota cron: %s", speedDengQuotaCron)
+	}
+}
+
+func TestRegisterDefaultJobsRegistersSpeedDengQuotaJobWhenConfigured(t *testing.T) {
+	t.Parallel()
+
+	speed := speeddeng.NewServiceWithDependencies(nil, nil, config.LoadTimeZone("UTC"), nil)
+	scheduler := New(slog.Default(), Options{}, nil, nil, nil).WithSpeedDeng(speed)
+	scheduler.RegisterDefaultJobs()
+
+	if scheduler.speedDengID == 0 {
+		t.Fatal("expected speed-deng quota job id")
+	}
+	if entries := scheduler.cron.Entries(); len(entries) != 1 {
+		t.Fatalf("entries = %d, want one speed-deng job", len(entries))
+	}
+}
+
+func TestSpeedDengQuotaJobReleasesGuardWhenServiceUnavailable(t *testing.T) {
+	t.Parallel()
+
+	scheduler := New(slog.Default(), Options{}, nil, nil, nil).WithSpeedDeng(speeddeng.NewServiceWithDependencies(nil, nil, config.LoadTimeZone("UTC"), nil))
+	scheduler.runSpeedDengQuotaCheck()
+	if scheduler.speedChecking.Load() {
+		t.Fatal("speed-deng quota guard should be released when service is unavailable")
 	}
 }
 

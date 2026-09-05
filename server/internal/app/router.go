@@ -19,6 +19,7 @@ import (
 	"xlyra/server/internal/catalog"
 	"xlyra/server/internal/config"
 	oauthcostshare "xlyra/server/internal/custom/oauthcostshare"
+	"xlyra/server/internal/custom/speeddeng"
 	"xlyra/server/internal/dashboard"
 	"xlyra/server/internal/downloads"
 	"xlyra/server/internal/gateway"
@@ -43,7 +44,7 @@ func NewRouter(cfg config.Config, logger *slog.Logger, db *store.Store, confFile
 	return router
 }
 
-func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Store, confFile *config.ConfigFile, masterKey string) (http.Handler, *gateway.Handler) {
+func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Store, confFile *config.ConfigFile, masterKey string, speedServices ...*speeddeng.Service) (http.Handler, *gateway.Handler) {
 	appTimeZone := config.ResolveTimeZone()
 	var authService *auth.Service
 	if db != nil {
@@ -69,9 +70,15 @@ func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Stor
 		routerService = routeengine.NewService(db)
 		usageService = usage.NewService(db, appTimeZone)
 	}
+	var speedDengService *speeddeng.Service
+	if len(speedServices) > 0 {
+		speedDengService = speedServices[0]
+	} else {
+		speedDengService = speeddeng.NewService(db, speeddeng.NewDatabaseQuotaProvider(db, oauthService), appTimeZone, logger.With("thread", "speed-deng"))
+	}
 	systemStatsService := systemstats.NewService(appTimeZone)
 	downloadService := downloads.NewService()
-	gatewayHandler := gateway.NewHandlerWithTimeZone(logger.With("thread", "gateway"), authService, routerService, db, masterKey, appTimeZone, confFile)
+	gatewayHandler := gateway.NewHandlerWithTimeZone(logger.With("thread", "gateway"), authService, routerService, db, masterKey, appTimeZone, confFile).WithSpeedDengCapture(speedDengService)
 	playgroundGatewayHandler := gatewayHandler.WithRouteSiteHeader()
 	playgroundRoot := filepath.Join(config.ResolveWorkdir(), "playground")
 	playgroundService := playground.NewService(logger.With("thread", "playground"), db, gatewayHandler, playgroundRoot)
@@ -92,6 +99,7 @@ func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Stor
 	}
 	settingsHandler := settings.NewHandlerWithBackup(logger.With("thread", "settings"), confFile, db, masterKey, downloadService, playgroundRoot, preRestore, postRestore, appTimeZone)
 	oauthCostShareHandler := oauthcostshare.NewHandler(db, confFile, appTimeZone)
+	speedDengHandler := speeddeng.NewHandlerWithService(speedDengService)
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
@@ -141,6 +149,7 @@ func NewRouterWithGateway(cfg config.Config, logger *slog.Logger, db *store.Stor
 				protected.Use(requireAdminCSRF(authService))
 				protected.Use(adminHandler.AuditAdminMutation)
 				oauthCostShareHandler.Mount(protected)
+				speedDengHandler.Mount(protected)
 				protected.Get("/auth/session", adminHandler.CurrentSession)
 				protected.Delete("/auth/session", adminHandler.DeleteSession)
 				protected.Route("/playground", func(playgroundRouter chi.Router) {

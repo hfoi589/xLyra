@@ -21,6 +21,7 @@ const namespaces = [
   'traffic-flow',
   'request-charts',
   'oauth-cost-share',
+  'speed-deng',
 ] as const
 
 type Locale = 'zh' | 'en' | 'jp'
@@ -47,6 +48,7 @@ const resourceLoaders: Record<Locale, Record<Namespace, () => Promise<ResourceMo
     'traffic-flow': () => import('./zh/traffic-flow.json'),
     'request-charts': () => import('./zh/request-charts.json'),
     'oauth-cost-share': () => import('./zh/oauth-cost-share.json'),
+    'speed-deng': () => import('./zh/speed-deng.json'),
   },
   en: {
     common: () => import('./en/common.json'),
@@ -67,6 +69,7 @@ const resourceLoaders: Record<Locale, Record<Namespace, () => Promise<ResourceMo
     'traffic-flow': () => import('./en/traffic-flow.json'),
     'request-charts': () => import('./en/request-charts.json'),
     'oauth-cost-share': () => import('./en/oauth-cost-share.json'),
+    'speed-deng': () => import('./en/speed-deng.json'),
   },
   jp: {
     common: () => import('./jp/common.json'),
@@ -87,6 +90,7 @@ const resourceLoaders: Record<Locale, Record<Namespace, () => Promise<ResourceMo
     'traffic-flow': () => import('./jp/traffic-flow.json'),
     'request-charts': () => import('./jp/request-charts.json'),
     'oauth-cost-share': () => import('./jp/oauth-cost-share.json'),
+    'speed-deng': () => import('./jp/speed-deng.json'),
   },
 }
 

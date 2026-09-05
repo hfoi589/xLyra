@@ -451,6 +451,31 @@ func TestCodexFetchUserSummaryIncludesResetCreditsFromUsage(t *testing.T) {
 	}
 }
 
+func TestCodexFetchQuotaOnlyDoesNotRequestModels(t *testing.T) {
+	var requestedPaths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedPaths = append(requestedPaths, r.URL.Path)
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path != "/backend-api/wham/usage" {
+			t.Fatalf("unexpected quota-only path: %s", r.URL.Path)
+		}
+		_, _ = w.Write([]byte(`{"rate_limit":{"secondary_window":{"limit_window_seconds":604800,"remaining_percent":100}}}`))
+	}))
+	defer server.Close()
+
+	quota, err := NewCodex().FetchQuota(context.Background(), SiteConfig{BaseURL: server.URL + "/backend-api"}, SystemAuth{AccessToken: "token", AccountID: "acct"})
+	if err != nil {
+		t.Fatalf("FetchQuota returned error: %v", err)
+	}
+	if len(requestedPaths) != 1 || requestedPaths[0] != "/backend-api/wham/usage" {
+		t.Fatalf("requested paths = %#v, want usage only", requestedPaths)
+	}
+	weekly, ok := quota["weekly"].(map[string]any)
+	if !ok || weekly["remaining_percent"] != 100 {
+		t.Fatalf("quota = %#v, want weekly remaining 100", quota)
+	}
+}
+
 func TestCodexFetchUserSummaryOmitsResetCreditsWhenAbsent(t *testing.T) {
 	var requestedPaths []string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
