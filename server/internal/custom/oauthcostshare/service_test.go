@@ -95,7 +95,7 @@ func TestBuildCostShareSeparatesSpeedDengNameAndUsesCNYFee(t *testing.T) {
 
 func TestMergeUsageRowsRemovesSpeedDengMirrorFromSourceRows(t *testing.T) {
 	source := []UsageRow{{ModelKey: "gpt-5", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 10, RequestCount: 2}}
-	speed := []UsageRow{{ModelKey: "gpt-5", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 6, RequestCount: 1, SpeedDeng: true}}
+	speed := []UsageRow{{ModelKey: "gpt-5.6-sol", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 6, RequestCount: 1, SpeedDeng: true}}
 	merged := mergeUsageRows(source, speed)
 	if len(merged) != 2 {
 		t.Fatalf("merged rows = %#v, want normal and speed rows", merged)

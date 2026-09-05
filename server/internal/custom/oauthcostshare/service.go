@@ -111,10 +111,9 @@ func mergeUsageRows(source, speed []UsageRow) []UsageRow {
 	if len(speed) == 0 {
 		return source
 	}
-	type key struct{ apiKey, model string }
-	deductions := make(map[key]UsageRow)
+	deductions := make(map[string]UsageRow)
 	for _, row := range speed {
-		k := key{apiKey: row.APIKeyKey, model: row.ModelKey}
+		k := row.APIKeyKey
 		item := deductions[k]
 		item.Cost += row.Cost
 		item.RequestCount += row.RequestCount
@@ -122,7 +121,7 @@ func mergeUsageRows(source, speed []UsageRow) []UsageRow {
 	}
 	result := make([]UsageRow, 0, len(source)+len(speed))
 	for _, row := range source {
-		k := key{apiKey: row.APIKeyKey, model: row.ModelKey}
+		k := row.APIKeyKey
 		deduction, ok := deductions[k]
 		if !ok {
 			result = append(result, row)
