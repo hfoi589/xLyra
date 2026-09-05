@@ -93,6 +93,21 @@ func TestBuildCostShareSeparatesSpeedDengNameAndUsesCNYFee(t *testing.T) {
 	}
 }
 
+func TestMergeUsageRowsRemovesSpeedDengMirrorFromSourceRows(t *testing.T) {
+	source := []UsageRow{{ModelKey: "gpt-5", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 10, RequestCount: 2}}
+	speed := []UsageRow{{ModelKey: "gpt-5", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 6, RequestCount: 1, SpeedDeng: true}}
+	merged := mergeUsageRows(source, speed)
+	if len(merged) != 2 {
+		t.Fatalf("merged rows = %#v, want normal and speed rows", merged)
+	}
+	if merged[0].Cost != 4 || merged[0].RequestCount != 1 || merged[0].SpeedDeng {
+		t.Fatalf("normal row = %#v, want remaining non-speed usage", merged[0])
+	}
+	if merged[1].Cost != 6 || merged[1].RequestCount != 1 || !merged[1].SpeedDeng {
+		t.Fatalf("speed row = %#v, want captured speed usage", merged[1])
+	}
+}
+
 func TestNormalizeKeyNameMapsMissingKeyMarkersToUnknown(t *testing.T) {
 	t.Parallel()
 
@@ -211,8 +226,8 @@ func TestServiceCostShareMergesSpeedRowsAndReportsSpeedQueryWarning(t *testing.T
 	if err != nil {
 		t.Fatalf("merged CostShare error = %v", err)
 	}
-	if result.Meta.RequestCount != 3 || !result.Meta.SpeedDengDataAvailable || result.Data.TotalUsageCost != 30 {
-		t.Fatalf("merged result = %#v, want count=3 speed available usage=30", result)
+	if result.Meta.RequestCount != 2 || !result.Meta.SpeedDengDataAvailable || result.Data.TotalUsageCost != 20 {
+		t.Fatalf("merged result = %#v, want count=2 speed available usage=20", result)
 	}
 
 	degraded := NewServiceWithSources(base, fakeSpeedSource{err: errors.New("custom table unavailable")}, cfgFile, config.LoadTimeZone("UTC"))

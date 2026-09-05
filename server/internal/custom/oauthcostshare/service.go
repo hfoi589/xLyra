@@ -97,7 +97,7 @@ func (s *Service) CostShare(ctx context.Context, query CostShareQuery, now time.
 			result.Meta.SpeedDengWarning = speedErr.Error()
 		} else {
 			result.Meta.SpeedDengDataAvailable = true
-			rows = append(rows, speedRows...)
+			rows = mergeUsageRows(rows, speedRows)
 		}
 	}
 	for _, row := range rows {
@@ -105,6 +105,46 @@ func (s *Service) CostShare(ctx context.Context, query CostShareQuery, now time.
 	}
 	result.Data = BuildCostShare(rows, site, ReadConfig(s.confFile))
 	return result, nil
+}
+
+func mergeUsageRows(source, speed []UsageRow) []UsageRow {
+	if len(speed) == 0 {
+		return source
+	}
+	type key struct{ apiKey, model string }
+	deductions := make(map[key]UsageRow)
+	for _, row := range speed {
+		k := key{apiKey: row.APIKeyKey, model: row.ModelKey}
+		item := deductions[k]
+		item.Cost += row.Cost
+		item.RequestCount += row.RequestCount
+		deductions[k] = item
+	}
+	result := make([]UsageRow, 0, len(source)+len(speed))
+	for _, row := range source {
+		k := key{apiKey: row.APIKeyKey, model: row.ModelKey}
+		deduction, ok := deductions[k]
+		if !ok {
+			result = append(result, row)
+			continue
+		}
+		row.Cost -= deduction.Cost
+		row.RequestCount -= deduction.RequestCount
+		if row.Cost < 0 && row.Cost > -1e-8 {
+			row.Cost = 0
+		}
+		if row.RequestCount < 0 {
+			row.RequestCount = 0
+		}
+		if row.Cost > 0 || row.RequestCount > 0 {
+			result = append(result, row)
+		}
+		delete(deductions, k)
+	}
+	for _, row := range speed {
+		result = append(result, row)
+	}
+	return result
 }
 
 type costShareAccumulator struct {
