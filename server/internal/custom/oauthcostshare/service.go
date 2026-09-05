@@ -127,8 +127,12 @@ func mergeUsageRows(source, speed []UsageRow) []UsageRow {
 			result = append(result, row)
 			continue
 		}
-		row.Cost -= deduction.Cost
-		row.RequestCount -= deduction.RequestCount
+		costDeduction := minFloat(row.Cost, deduction.Cost)
+		countDeduction := minInt64(row.RequestCount, deduction.RequestCount)
+		row.Cost -= costDeduction
+		row.RequestCount -= countDeduction
+		deduction.Cost -= costDeduction
+		deduction.RequestCount -= countDeduction
 		if row.Cost < 0 && row.Cost > -1e-8 {
 			row.Cost = 0
 		}
@@ -138,12 +142,30 @@ func mergeUsageRows(source, speed []UsageRow) []UsageRow {
 		if row.Cost > 0 || row.RequestCount > 0 {
 			result = append(result, row)
 		}
-		delete(deductions, k)
+		if deduction.Cost <= 1e-8 && deduction.RequestCount <= 0 {
+			delete(deductions, k)
+		} else {
+			deductions[k] = deduction
+		}
 	}
 	for _, row := range speed {
 		result = append(result, row)
 	}
 	return result
+}
+
+func minFloat(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func minInt64(a, b int64) int64 {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 type costShareAccumulator struct {

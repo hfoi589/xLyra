@@ -94,17 +94,17 @@ func TestBuildCostShareSeparatesSpeedDengNameAndUsesCNYFee(t *testing.T) {
 }
 
 func TestMergeUsageRowsRemovesSpeedDengMirrorFromSourceRows(t *testing.T) {
-	source := []UsageRow{{ModelKey: "gpt-5", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 10, RequestCount: 2}}
-	speed := []UsageRow{{ModelKey: "gpt-5.6-sol", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 6, RequestCount: 1, SpeedDeng: true}}
+	source := []UsageRow{
+		{ModelKey: "gpt-5", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 4, RequestCount: 1},
+		{ModelKey: "gpt-5.6-sol", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 6, RequestCount: 1},
+	}
+	speed := []UsageRow{{ModelKey: "gpt-5.6-sol", APIKeyKey: "key-a", APIKeyName: "Alano", Cost: 10, RequestCount: 2, SpeedDeng: true}}
 	merged := mergeUsageRows(source, speed)
-	if len(merged) != 2 {
-		t.Fatalf("merged rows = %#v, want normal and speed rows", merged)
+	if len(merged) != 1 {
+		t.Fatalf("merged rows = %#v, want only speed row", merged)
 	}
-	if merged[0].Cost != 4 || merged[0].RequestCount != 1 || merged[0].SpeedDeng {
-		t.Fatalf("normal row = %#v, want remaining non-speed usage", merged[0])
-	}
-	if merged[1].Cost != 6 || merged[1].RequestCount != 1 || !merged[1].SpeedDeng {
-		t.Fatalf("speed row = %#v, want captured speed usage", merged[1])
+	if merged[0].Cost != 10 || merged[0].RequestCount != 2 || !merged[0].SpeedDeng {
+		t.Fatalf("speed row = %#v, want captured speed usage", merged[0])
 	}
 }
 
