@@ -46,8 +46,8 @@ func TestRegisterDefaultJobsRegistersSpeedDengQuotaJobWhenConfigured(t *testing.
 	if scheduler.speedDengID == 0 {
 		t.Fatal("expected speed-deng quota job id")
 	}
-	if entries := scheduler.cron.Entries(); len(entries) != 1 {
-		t.Fatalf("entries = %d, want one speed-deng job", len(entries))
+	if entries := scheduler.cron.Entries(); len(entries) != 2 {
+		t.Fatalf("entries = %d, want codex version refresh and speed-deng jobs", len(entries))
 	}
 }
 
