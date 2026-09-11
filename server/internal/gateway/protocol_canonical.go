@@ -683,6 +683,14 @@ func canonicalMessagesFromResponsesInput(raw any) []canonicalMessage {
 				itemType = "message"
 			}
 			switch itemType {
+			case "reasoning":
+				if thinking := canonicalThinkingFromResponsesItem(entry); len(thinking) > 0 {
+					if len(messages) > 0 && messages[len(messages)-1].Type == "message" && messages[len(messages)-1].Role == "assistant" {
+						messages[len(messages)-1].Thinking = append(messages[len(messages)-1].Thinking, thinking...)
+					} else {
+						messages = append(messages, canonicalMessage{Type: "message", Role: "assistant", Thinking: thinking})
+					}
+				}
 			case "message", "":
 				role := strings.TrimSpace(anyString(entry["role"]))
 				if role == "" {
