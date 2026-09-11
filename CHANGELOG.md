@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.2](https://github.com/Yachiyo-5i/xLyra/compare/v1.7.1...v1.7.2) (2026-09-11)
+
+
+### Bug Fixes
+
+* 🐛 修复 DeepSeek thinking 与工具调用在同一消息中被拆分导致 400 错误 ([543fd82](https://github.com/Yachiyo-5i/xLyra/commit/543fd82994cb3119d342277b1e2c79759928af59))
+* 修复 DeepSeek thinking 与工具调用被拆分到两条消息导致 400 错误 ([1467211](https://github.com/Yachiyo-5i/xLyra/commit/1467211c8f26d050f84889ec360018978e711c71))
+
 ## [1.7.1](https://github.com/Yachiyo-5i/xLyra/compare/v1.7.0...v1.7.1) (2026-09-11)
 
 
