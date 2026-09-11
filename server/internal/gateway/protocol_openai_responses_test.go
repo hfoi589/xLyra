@@ -1120,6 +1120,47 @@ func TestThinkingRoundtripModelDegradesToolResultWhenThinkingCacheMissing(t *tes
 	}
 }
 
+func TestDeepSeekAnthropicResponsesPreservesThinkingSignature(t *testing.T) {
+	t.Parallel()
+
+	canonical, err := canonicalRequestFromOpenAIResponsesPayload(map[string]any{
+		"model": "deepseek-v4-flash",
+		"input": []any{
+			map[string]any{
+				"type":               "reasoning",
+				"content":            []any{map[string]any{"type": "reasoning_text", "text": "private reasoning"}},
+				"thinking_signature": "sig_deepseek",
+			},
+			map[string]any{
+				"type":    "message",
+				"role":    "assistant",
+				"content": []any{map[string]any{"type": "output_text", "text": "I will call a tool."}},
+			},
+			map[string]any{"type": "function_call", "call_id": "call_1", "name": "lookup", "arguments": `{}`},
+			map[string]any{"type": "function_call_output", "call_id": "call_1", "output": "result"},
+		},
+	}, "deepseek-v4-flash")
+	if err != nil {
+		t.Fatalf("canonicalRequestFromOpenAIResponsesPayload returned error: %v", err)
+	}
+
+	protocol := newProviderAnthropicMessagesProtocolAdapter("deepseek", alternateProtocolDefinition{}, canonicalProtocolOpenAIResponses)
+	payload, err := protocol.BuildUpstreamPayload(gatewayRequest{DownstreamPath: gatewayEndpointResponses, Canonical: &canonical}, routeengine.Candidate{
+		Site:  routeengine.CandidateSite{SiteType: "deepseek", BaseURL: "https://api.deepseek.com"},
+		Model: routeengine.CandidateModel{UpstreamName: "deepseek-v4-flash"},
+	})
+	if err != nil {
+		t.Fatalf("BuildUpstreamPayload returned error: %v", err)
+	}
+
+	messages := payload["messages"].([]any)
+	content := messages[0].(map[string]any)["content"].([]any)
+	thinking := content[0].(map[string]any)
+	if thinking["type"] != "thinking" || thinking["signature"] != "sig_deepseek" {
+		t.Fatalf("thinking block = %#v, want returned signature", thinking)
+	}
+}
+
 func TestProviderAnthropicResponsesOmitsUnpairedToolCalls(t *testing.T) {
 	t.Parallel()
 
